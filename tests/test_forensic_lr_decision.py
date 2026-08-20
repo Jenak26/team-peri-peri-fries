@@ -2,6 +2,7 @@ import pytest
 
 from peri.core import forensic_lr as flr
 
+
 def result(name, median, usable=True, reason=None, weight=1.0):
     return flr.StreamResult(
         name=name,
@@ -45,6 +46,23 @@ def test_opposing_strong_streams_abstain_on_contradiction():
     decision = flr.fuse_and_decide([result("a", 3.0), result("b", -2.5)])
     assert decision.outcome == "INCONCLUSIVE"
     assert decision.reason_codes == ("cross-stream-contradiction",)
+
+def test_one_strong_stream_outvotes_a_weak_opposing_one():
+    # Only streams past the reporting threshold can contradict each other, so a
+    # weak dissenter is fused in rather than forcing an abstention.
+    decision = flr.fuse_and_decide([result("a", 2.5), result("b", -0.5)])
+    assert decision.outcome == "MANIPULATION INDICATED"
+    assert decision.reason_codes == ()
+    assert decision.primary_reason is None
+
+
+def test_primary_reason_is_the_first_of_the_reason_codes():
+    decision = flr.fuse_and_decide(
+        [result("a", 3.0, usable=False, reason="out-of-validated-domain")]
+    )
+    assert decision.reason_codes[0] == "no-usable-stream"
+    assert decision.primary_reason == "no-usable-stream"
+
 
 def test_opposing_but_weak_streams_do_not_trigger_contradiction():
     decision = flr.fuse_and_decide([result("a", 0.4), result("b", -0.3)])

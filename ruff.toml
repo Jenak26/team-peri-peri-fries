@@ -1,0 +1,23 @@
+# Lint configuration. The repo previously carried two styles side by side -
+# trailing whitespace, inconsistent blank lines, unsorted imports, two spellings
+# of the same attribute - which made real defects hard to see in a diff. This
+# pins one style so the next diff shows only what actually changed.
+line-length = 100
+target-version = "py311"
+
+[lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF", "PL"]
+ignore = [
+    "E501",     # enforced by line-length; duplicating it doubles the noise
+    "PLR0912",  # training loops branch a lot and linearly
+    "PLR0913",  # forensic entry points legitimately take many parameters
+    "PLR0915",  # training loops are long on purpose
+    "PLR0917",  # ditto, for positional arguments
+    "PLR2004",  # ladders and bin edges are literal by design
+    "PLW2901",  # `x = x.to(device)` is the idiom, not a bug
+    "PLC0415",  # transformers is imported lazily so the U-Net path needs no it
+    "RUF046",   # int() around round()/numpy ints is deliberate belt-and-braces
+]
+
+[lint.per-file-ignores]
+"tests/*" = ["PLR2004", "S101"]

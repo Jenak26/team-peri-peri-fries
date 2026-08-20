@@ -34,14 +34,50 @@ TRACKED_PACKAGES = [
     "pytest",
 ]
 
-DEVIATIONS = [
-    "CLAUDE.md section 1 specifies Python 3.11; this build runs Python 3.12 because "
-    "3.11 is not installed on the examination workstation and every pinned "
-    "dependency publishes 3.12 wheels.",
-    "torch is installed from the CPU wheel index on the examination workstation, "
-    "which has no CUDA device. Model training was performed on a separate CUDA 12.8 "
-    "workstation; checkpoint SHA-256 values are recorded in the examination manifest.",
-]
+SPECIFIED_PYTHON = "3.11"
+
+
+def _derive_deviations(python_version: str, torch_version: str) -> list[str]:
+    """Describe how THIS machine departs from the specified build environment.
+
+    Derived, never hard-coded. A fixed list of deviations goes stale the moment
+    the interpreter or the wheel index changes, and the report's Methods page
+    would then assert something about the run that is not true of it. The two
+    facts below are exactly the two that differ between the examination
+    workstation and the training workstation, so both must be read at runtime.
+    """
+    deviations: list[str] = []
+
+    running = ".".join(python_version.split(".")[:2])
+    if running != SPECIFIED_PYTHON:
+        deviations.append(
+            f"CLAUDE.md section 1 specifies Python {SPECIFIED_PYTHON}; this build "
+            f"runs Python {python_version}, because {SPECIFIED_PYTHON} is not "
+            f"installed on this workstation and every pinned dependency publishes "
+            f"wheels for {running}."
+        )
+
+    if torch_version == "not-installed":
+        deviations.append(
+            "torch is not installed on this workstation. It performs no model "
+            "inference; findings produced here are limited to the layers that "
+            "require no learned model."
+        )
+    elif "+cu" in torch_version:
+        deviations.append(
+            f"torch {torch_version} is a CUDA build. This workstation is capable "
+            f"of model training; checkpoint SHA-256 values for any weights it "
+            f"produces are recorded in the examination manifest."
+        )
+    else:
+        deviations.append(
+            f"torch {torch_version} is a CPU build, so this workstation has no "
+            f"CUDA device. Model training was performed on a separate CUDA 12.8 "
+            f"workstation; checkpoint SHA-256 values are recorded in the "
+            f"examination manifest."
+        )
+
+    return deviations
 
 
 def _package_version(name: str) -> str:
@@ -82,8 +118,11 @@ def build_environment_record() -> dict:
             "ffmpeg": _binary_version(["ffmpeg", "-version"]),
             "ffprobe": _binary_version(["ffprobe", "-version"]),
         },
-        "deviations": list(DEVIATIONS),
+        "deviations": [],
     }
+    record["deviations"] = _derive_deviations(
+        record["python"]["version"], record["packages"]["torch"]
+    )
     # generated_utc is deliberately excluded: the hash identifies the environment,
     # not the moment the record was written.
     hashable = {k: v for k, v in record.items() if k != "generated_utc"}

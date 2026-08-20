@@ -11,8 +11,8 @@ with Hd. Wrappers are responsible for that orientation; this module never re-ori
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass, replace
-from typing import Sequence
+from collections.abc import Sequence
+from dataclasses import dataclass
 
 import numpy as np
 
@@ -81,17 +81,22 @@ def enfsi_sentence(log10lr: float) -> str:
             f"The findings provide {band} for either proposition over the other; "
             f"they distinguish neither proposition at the reporting threshold."
         )
-    supported = HD_TEXT if value > 0 else HP_TEXT
-    other = HP_TEXT if value > 0 else HD_TEXT
+    supported, competing = (HD_TEXT, "Hp") if value > 0 else (HP_TEXT, "Hd")
     return (
         f"The findings provide {band} for the proposition that {supported}, "
-        f"rather than the proposition that {other}."
+        f"rather than for the competing proposition {competing}, which is stated "
+        f"in full alongside it."
     )
 
 
 MIN_KDE_SAMPLES_PER_CLASS = 15
-_DENSITY_FLOOR = 1e-12
 _LN10 = math.log(10.0)
+_LOG_SQRT_2PI = 0.5 * math.log(2.0 * math.pi)
+
+# Ridge penalty on the logistic fit. Calibration classes are often separable at
+# small sample sizes; an unpenalised fit then drives its coefficient to infinity
+# and every exhibit saturates the clip, which reads as certainty we do not have.
+LOGISTIC_RIDGE = 1.0
 
 
 def silverman_bandwidth(values: Sequence[float]) -> float:
@@ -110,28 +115,42 @@ def silverman_bandwidth(values: Sequence[float]) -> float:
     return float(0.9 * spread * n ** (-1.0 / 5.0))
 
 
-def _kde_density(x: float, samples: np.ndarray, bandwidth: float) -> float:
+def _log_kde_density(x: float, samples: np.ndarray, bandwidth: float) -> float:
+    """log f(x) under a Gaussian KDE, evaluated with a log-sum-exp.
+
+    Evaluating the density directly and then taking a ratio underflows to zero
+    for any score far from both classes, which silently turns a decisive exhibit
+    into log10 LR = 0. In log space the tails stay finite and correctly signed,
+    and the reported value saturates at LR_CLIP instead of collapsing.
+    """
     z = (float(x) - samples) / bandwidth
-    return float(np.exp(-0.5 * z * z).sum() / (samples.size * bandwidth * math.sqrt(2 * math.pi)))
+    exponents = -0.5 * z * z
+    peak = float(exponents.max())
+    log_sum = peak + math.log(float(np.exp(exponents - peak).sum()))
+    return log_sum - math.log(samples.size * bandwidth) - _LOG_SQRT_2PI
 
 
 def _fit_logistic(hp: np.ndarray, hd: np.ndarray) -> tuple[float, float]:
-    """Single-feature logistic fit by Newton-Raphson. No sklearn dependency here:
-    a two-parameter fit with a fixed iteration count is deterministic, which the
-    replay hash requires.
+    """Ridge-penalised single-feature logistic fit by Newton-Raphson.
+
+    No sklearn dependency: a two-parameter fit with a fixed iteration cap is
+    deterministic, which the replay hash requires. The ridge penalty applies to
+    the slope only - shrinking the intercept would bias the class balance we
+    subtract back out as the prior log-odds.
     """
     x = np.concatenate([hp, hd])
     y = np.concatenate([np.zeros(hp.size), np.ones(hd.size)])
     scale = float(x.std(ddof=0)) or 1.0
     xs = x / scale
-    beta = np.zeros(2, dtype=float)
     design = np.column_stack([xs, np.ones_like(xs)])
+    penalty = np.diag([LOGISTIC_RIDGE, 0.0])
+    beta = np.zeros(2, dtype=float)
     for _ in range(50):
         eta = design @ beta
         p = 1.0 / (1.0 + np.exp(-np.clip(eta, -30.0, 30.0)))
         w = np.clip(p * (1.0 - p), 1e-6, None)
-        gradient = design.T @ (y - p)
-        hessian = design.T @ (design * w[:, None]) + 1e-6 * np.eye(2)
+        gradient = design.T @ (y - p) - penalty @ beta
+        hessian = design.T @ (design * w[:, None]) + penalty + 1e-6 * np.eye(2)
         step = np.linalg.solve(hessian, gradient)
         beta = beta + step
         if float(np.abs(step).max()) < 1e-10:
@@ -191,23 +210,29 @@ class StreamCalibration:
     feature_dim: int
 
     def to_dict(self) -> dict:
+        """Full-precision payload. Quantisation happens once, at hash time.
+
+        `canon.canonical_json` quantises every float on the way to a digest, so
+        rounding here as well would only cost us an exact round-trip through
+        artifacts/calibration.json without changing any hash.
+        """
         return {
             "name": self.name,
             "method": self.method,
-            "hp_scores": [q(v) for v in self.hp_scores],
-            "hd_scores": [q(v) for v in self.hd_scores],
-            "bandwidth": q(self.bandwidth),
-            "logistic_coef": q(self.logistic_coef),
-            "logistic_intercept": q(self.logistic_intercept),
-            "prior_log_odds": q(self.prior_log_odds),
-            "feature_mean": [q(v) for v in self.feature_mean],
-            "feature_cov_inv": [[q(v) for v in row] for row in self.feature_cov_inv],
-            "mahalanobis_threshold": q(self.mahalanobis_threshold),
+            "hp_scores": list(self.hp_scores),
+            "hd_scores": list(self.hd_scores),
+            "bandwidth": self.bandwidth,
+            "logistic_coef": self.logistic_coef,
+            "logistic_intercept": self.logistic_intercept,
+            "prior_log_odds": self.prior_log_odds,
+            "feature_mean": list(self.feature_mean),
+            "feature_cov_inv": [list(row) for row in self.feature_cov_inv],
+            "mahalanobis_threshold": self.mahalanobis_threshold,
             "feature_dim": self.feature_dim,
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "StreamCalibration":
+    def from_dict(cls, data: dict) -> StreamCalibration:
         return cls(
             name=str(data["name"]),
             method=str(data["method"]),
@@ -277,9 +302,9 @@ def log10_lr(cal: StreamCalibration, score: float) -> float:
     if cal.method == "kde":
         hp = np.asarray(cal.hp_scores, dtype=float)
         hd = np.asarray(cal.hd_scores, dtype=float)
-        f_hp = max(_kde_density(score, hp, cal.bandwidth), _DENSITY_FLOOR)
-        f_hd = max(_kde_density(score, hd, cal.bandwidth), _DENSITY_FLOOR)
-        value = math.log10(f_hd / f_hp)
+        log_hp = _log_kde_density(score, hp, cal.bandwidth)
+        log_hd = _log_kde_density(score, hd, cal.bandwidth)
+        value = (log_hd - log_hp) / _LN10
     else:
         # Logistic gives a posterior. Subtracting the fitted prior log-odds
         # recovers the likelihood ratio, so the calibration corpus's own class
@@ -348,13 +373,26 @@ def mahalanobis_distance(cal: StreamCalibration, feature: Sequence[float]) -> fl
 
 
 def evaluate_stream(cal: StreamCalibration, obs: StreamObservation) -> StreamResult:
+    """Score one stream, gate it, and decide whether it may be reported at all.
+
+    Exclusion order is deliberate: the validated-domain gate is asked first,
+    because a stream evaluated outside the population we calibrated on has no
+    meaningful stability to measure.
+    """
     baseline_lr = log10_lr(cal, obs.score)
-    stress_lrs = tuple(log10_lr(cal, s) for s in obs.stress_scores) if obs.stress_scores else (baseline_lr,)
-    
-    arr = np.asarray(stress_lrs)
-    median_lr = float(np.median(arr))
-    iqr = float(np.subtract(*np.percentile(arr, [75, 25]))) if arr.size > 1 else 0.0
-    
+    if obs.stress_scores:
+        stress_lrs = tuple(log10_lr(cal, s) for s in obs.stress_scores)
+    else:
+        stress_lrs = (baseline_lr,)
+
+    replicas = np.asarray(stress_lrs, dtype=float)
+    median_lr = float(np.median(replicas))
+    iqr = (
+        float(np.subtract(*np.percentile(replicas, [75, 25])))
+        if replicas.size > 1
+        else 0.0
+    )
+
     md = mahalanobis_distance(cal, obs.feature)
     in_domain = md <= math.sqrt(cal.mahalanobis_threshold)
 
@@ -362,11 +400,13 @@ def evaluate_stream(cal: StreamCalibration, obs: StreamObservation) -> StreamRes
     if not in_domain:
         exclusion_reason = REASON_OUT_OF_DOMAIN
     else:
-        # Check sign instability
-        # Both positive and negative values exist AND at least one exceeds threshold
-        min_lr = float(arr.min())
-        max_lr = float(arr.max())
-        if min_lr < 0 < max_lr and max(abs(min_lr), abs(max_lr)) >= LOG10LR_DECISION_THRESHOLD:
+        # Sign instability: the replicas straddle zero AND at least one of them
+        # is strong enough to have been reported. A stream that merely wobbles
+        # either side of zero while staying below the reporting threshold has
+        # not changed its answer, because it never gave one.
+        lowest, highest = float(replicas.min()), float(replicas.max())
+        strongest = max(abs(lowest), abs(highest))
+        if lowest < 0 < highest and strongest >= LOG10LR_DECISION_THRESHOLD:
             exclusion_reason = REASON_SIGN_UNSTABLE
         elif iqr > STABILITY_IQR_MAX:
             exclusion_reason = REASON_UNSTABLE
@@ -407,8 +447,19 @@ class Decision:
             "streams": [s.to_dict() for s in self.streams],
             "usable_stream_names": list(self.usable_stream_names),
             "dependence_shrinkage": q(self.shrinkage),
+            "primary_reason": self.primary_reason,
             "propositions": {"Hp": HP_TEXT, "Hd": HD_TEXT},
         }
+
+    @property
+    def primary_reason(self) -> str | None:
+        """The single headline reason, for a UI panel or a report line.
+
+        `reason_codes` stays authoritative and keeps every contributing code;
+        this is the first of them, which is the one that decided the outcome.
+        """
+        return self.reason_codes[0] if self.reason_codes else None
+
 
 def fuse_and_decide(results: Sequence[StreamResult]) -> Decision:
     results = tuple(results)

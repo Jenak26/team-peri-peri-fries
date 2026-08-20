@@ -12,7 +12,7 @@ import json
 import math
 import os
 import random
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from typing import Any
 
 PERI_SEED: int = 20260820
@@ -76,9 +76,22 @@ def sha256_file(path: str | os.PathLike[str], chunk: int = 1 << 20) -> str:
     return digest.hexdigest()
 
 
+def stable_seed(*parts: Any, base: int = PERI_SEED) -> int:
+    """A reproducible 32-bit seed derived from `parts` and the base seed.
+
+    Python's built-in `hash()` is salted per process for str and bytes, so a
+    seed derived from it changes between runs and anything it drives - a corpus,
+    an augmentation stream - stops being reproducible. Setting PYTHONHASHSEED
+    from inside the process is too late to help, because the salt is chosen
+    before the first line of user code runs. A digest has no such problem.
+    """
+    digest = sha256_hex(canonical_json([base, list(parts)]).encode("utf-8"))
+    return int(digest[:8], 16)
+
+
 def utc_now_iso() -> str:
     return (
-        datetime.now(timezone.utc)
+        datetime.now(UTC)
         .replace(microsecond=0)
         .isoformat()
         .replace("+00:00", "Z")

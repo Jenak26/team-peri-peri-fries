@@ -34,7 +34,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 
-from peri.core.canon import PERI_SEED, canonical_json, hash_obj
+from peri.core.canon import PERI_SEED, hash_obj, stable_seed
 from peri.core.errors import CorpusError
 from train.config import (
     AUTHENTIC_DIR,
@@ -271,10 +271,13 @@ def build(
     if out_dir.exists():
         shutil.rmtree(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
+    # data/corpus is tracked but its contents are not; restore the marker the
+    # rmtree above just removed, or the next `git status` reports a deletion.
+    (out_dir / ".gitkeep").touch()
 
-    rng = np.random.default_rng(seed)
     samples: list[dict] = []
     skipped: list[str] = []
+    donor_cache: dict[str, list[np.ndarray]] = {}
 
     for position, clip in enumerate(clips):
         identity = clip.stem
@@ -306,15 +309,20 @@ def build(
         same_split = [c for c in clips if splits[c.stem] == split and c.stem != identity]
         donor_clip = same_split[position % len(same_split)] if same_split else clip
 
-        for method in SPLIT_METHODS[split]:
-            donor_frames = extract_frames(donor_clip, frames_per_clip)
-            if not donor_frames:
-                donor_frames = list(reversed(frames))
+        # Decode each donor clip once. It was previously re-decoded for every
+        # splice method, which is four full decodes of the same file per source.
+        if donor_clip.stem not in donor_cache:
+            decoded = extract_frames(donor_clip, frames_per_clip)
+            donor_cache[donor_clip.stem] = decoded or list(reversed(frames))
+        donor_frames = donor_cache[donor_clip.stem]
 
+        for method in SPLIT_METHODS[split]:
             spliced: list[np.ndarray] = []
             masks: list[np.ndarray] = []
+            # stable_seed, not hash(): see peri.core.canon.stable_seed. A salted
+            # hash here gave a different corpus on every run.
             method_rng = np.random.default_rng(
-                abs(hash((identity, method, seed))) % (2**32)
+                stable_seed(identity, method, base=seed)
             )
             for index, frame in enumerate(frames):
                 donor = donor_frames[index % len(donor_frames)]
@@ -343,7 +351,6 @@ def build(
             f"[{position + 1}/{len(clips)}] {identity} -> {split} "
             f"({1 + len(SPLIT_METHODS[split])} samples)"
         )
-        _ = rng.random()  # keep the top-level stream advancing deterministically
 
     index = {
         "corpus_id": CORPUS_ID,
@@ -358,7 +365,10 @@ def build(
         "skipped_unreadable": skipped,
         "samples": sorted(samples, key=lambda s: s["sample_id"]),
     }
-    index["index_hash"] = hash_obj({k: v for k, v in index.items() if k != "samples"})
+    # Hash the whole index, samples included. Hashing only the header would let
+    # the corpus contents change without the recorded hash moving, and that hash
+    # is what the report cites as the calibration corpus identity.
+    index["index_hash"] = hash_obj(index)
     (out_dir / "index.json").write_text(
         json.dumps(index, indent=2, sort_keys=True), encoding="utf-8"
     )

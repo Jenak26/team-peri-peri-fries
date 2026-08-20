@@ -27,13 +27,14 @@ the report rather than presented as if the corpus contained natural partial edit
 from __future__ import annotations
 
 import argparse
+import math
 import time
 from pathlib import Path
 
 import numpy as np
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
+from torch import nn
 from torch.utils.data import DataLoader, Dataset
 
 from peri.core.canon import PERI_SEED, seed_everything, utc_now_iso
@@ -48,8 +49,8 @@ from train.config import (
     STAGE_C_CKPT,
     RunMeta,
 )
-from train.dataset import _read_rgb, _frame_paths, load_index
-from train.stage_b_decoder import build_model, frame_score
+from train.dataset import frame_paths, load_index, read_rgb
+from train.stage_b_decoder import auroc, build_model, frame_score
 
 assert_transform_disjointness()
 
@@ -92,12 +93,12 @@ def cache_tokens(
     cached: dict[str, dict] = {}
 
     for position, sample in enumerate(index["samples"]):
-        paths = _frame_paths(corpus_dir, sample)[:max_frames]
+        paths = frame_paths(corpus_dir, sample)[:max_frames]
         if not paths:
             continue
         tokens = []
         for path in paths:
-            image = _read_rgb(path)
+            image = read_rgb(path)
             tensor = torch.from_numpy(
                 np.ascontiguousarray(image.transpose(2, 0, 1))
             )[None].to(device)
@@ -166,7 +167,7 @@ class TokenSequenceDataset(Dataset):
 
         if hybrids:
             rng = np.random.default_rng(seed)
-            for identity, group in sorted(by_identity.items()):
+            for _identity, group in sorted(by_identity.items()):
                 authentic = group.get("authentic")
                 manipulated = [v for k, v in sorted(group.items()) if k != "authentic"]
                 if authentic is None or not manipulated:
@@ -337,14 +338,12 @@ def main() -> int:
                 scores.extend(torch.sigmoid(video_logit).cpu().tolist())
                 labels.extend(video_label.int().tolist())
 
-        from train.stage_b_decoder import auroc
-
         area = auroc(scores, labels)
         train_loss = running / max(seen, 1)
         history.append({"epoch": epoch, "train_loss": train_loss, "val_auroc": area})
         print(f"epoch {epoch:3d}/{args.epochs}  loss {train_loss:.4f}  AUROC {area:.4f}")
 
-        if area == area and area > best:
+        if not math.isnan(area) and area > best:
             best = area
             torch.save(
                 {
