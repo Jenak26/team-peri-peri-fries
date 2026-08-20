@@ -23,13 +23,15 @@ Run:
 from __future__ import annotations
 
 import argparse
+import itertools
+import math
 import time
 from pathlib import Path
 
 import numpy as np
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
+from torch import nn
 from torch.utils.data import DataLoader
 
 from peri.core.canon import PERI_SEED, seed_everything, utc_now_iso
@@ -38,6 +40,7 @@ from peri.core.videoprint import VideoprintExtractor
 from train.config import (
     ARTIFACTS_DIR,
     CORPUS_DIR,
+    HELD_OUT_METHOD,
     STAGE_A_CKPT,
     STAGE_B,
     STAGE_B_CKPT,
@@ -134,7 +137,7 @@ def build_model(arch: str, backbone: str) -> nn.Module:
     if arch == "segformer":
         try:
             return SegformerDecoder(backbone)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             print(f"[warn] SegFormer unavailable ({exc}); falling back to U-Net")
             return UNetDecoder()
     if arch == "unet":
@@ -164,23 +167,92 @@ def confidence_loss(
     return F.mse_loss(torch.sigmoid(conf_logits), true_class_probability)
 
 
-def iou_score(mask_logits: torch.Tensor, target: torch.Tensor, threshold: float = 0.5) -> float:
+def iou_score(
+    mask_logits: torch.Tensor, target: torch.Tensor, threshold: float = 0.5
+) -> float | None:
+    """IoU for one frame, or None when there is nothing to localise.
+
+    Returns None rather than 1.0 for an authentic frame. An authentic frame has
+    an empty ground-truth mask, so a correct model scores a vacuous perfect 1.0
+    on it; averaging those in makes validation IoU track the authentic fraction
+    of the split more than it tracks localisation quality, and the best-epoch
+    checkpoint then gets selected on that. The caller drops the Nones.
+    """
+    if target.sum().item() == 0:
+        return None
     predicted = (torch.sigmoid(mask_logits) > threshold).float()
     intersection = (predicted * target).sum().item()
     union = ((predicted + target) > 0).float().sum().item()
-    return intersection / union if union > 0 else 1.0
+    return intersection / union if union > 0 else 0.0
 
 
 def auroc(scores: list[float], labels: list[int]) -> float:
-    """Rank-based AUROC. No sklearn dependency in the training loop."""
+    """Rank-based AUROC with midranks for ties. No sklearn in the training loop.
+
+    Ties matter here: a saturated decoder emits identical frame scores for many
+    frames, and breaking those ties by array order would report an AUROC that
+    depends on the order the dataloader happened to hand them over in.
+    """
     if len(set(labels)) < 2:
         return float("nan")
-    order = np.argsort(np.asarray(scores, dtype=float))
-    ranks = np.empty(len(scores), dtype=float)
-    ranks[order] = np.arange(1, len(scores) + 1)
+    values = np.asarray(scores, dtype=float)
     y = np.asarray(labels)
+    order = np.argsort(values, kind="mergesort")
+    ranks = np.empty(values.size, dtype=float)
+    ranks[order] = np.arange(1, values.size + 1, dtype=float)
+    # Average ranks within each run of equal scores.
+    sorted_values = values[order]
+    start = 0
+    for stop in range(1, sorted_values.size + 1):
+        if stop == sorted_values.size or sorted_values[stop] != sorted_values[start]:
+            if stop - start > 1:
+                ranks[order[start:stop]] = ranks[order[start:stop]].mean()
+            start = stop
     n_pos, n_neg = int((y == 1).sum()), int((y == 0).sum())
     return float((ranks[y == 1].sum() - n_pos * (n_pos + 1) / 2) / (n_pos * n_neg))
+
+
+def expected_calibration_error(
+    scores: list[float], labels: list[int], bins: int = 10
+) -> float:
+    """ECE over equal-width confidence bins.
+
+    CLAUDE.md section 4 requires this alongside AUROC: a well-calibrated 0.85
+    beats an overconfident 0.97, and we report both rather than quietly showing
+    only the number that flatters the model.
+    """
+    if not scores:
+        return float("nan")
+    values = np.asarray(scores, dtype=float)
+    y = np.asarray(labels, dtype=float)
+    edges = np.linspace(0.0, 1.0, bins + 1)
+    total = 0.0
+    for lower, upper in itertools.pairwise(edges):
+        # The first bin is closed at the bottom so a score of exactly 0.0 lands
+        # somewhere; every later bin is half-open.
+        in_bin = values <= upper if lower <= 0.0 else (values > lower) & (values <= upper)
+        if not in_bin.any():
+            continue
+        total += in_bin.mean() * abs(y[in_bin].mean() - values[in_bin].mean())
+    return float(total)
+
+
+def held_out_auroc(scores: list[float], labels: list[int], methods: list[str]) -> float:
+    """AUROC over authentic frames plus the held-out splice method only.
+
+    This is the generalisation claim: the held-out method never appears in train
+    or val, so this number says how the decoder does on a manipulation family it
+    was never shown. NaN when the split in front of it contains no held-out
+    samples - which is true of val by construction, and false for cal and test.
+    """
+    keep = [
+        i
+        for i, method in enumerate(methods)
+        if labels[i] == 0 or method == HELD_OUT_METHOD
+    ]
+    if not keep:
+        return float("nan")
+    return auroc([scores[i] for i in keep], [labels[i] for i in keep])
 
 
 def frame_score(mask_logits: torch.Tensor, top_fraction: float = 0.02) -> torch.Tensor:
@@ -308,9 +380,12 @@ def main() -> int:
         train_loss = running / max(seen, 1)
 
         model.eval()
-        ious, scores, labels = [], [], []
+        ious: list[float] = []
+        scores: list[float] = []
+        labels: list[int] = []
+        methods: list[str] = []
         with torch.no_grad():
-            for step, (image, mask, label, _method) in enumerate(val_loader):
+            for step, (image, mask, label, method) in enumerate(val_loader):
                 if args.max_steps and step >= args.max_steps:
                     break
                 image = image.to(device)
@@ -320,18 +395,35 @@ def main() -> int:
                 )
                 logits = model(stacked)
                 mask_logits = logits[:, 0:1].float()
-                ious.append(iou_score(mask_logits, mask))
+                for i in range(mask_logits.shape[0]):
+                    value = iou_score(mask_logits[i : i + 1], mask[i : i + 1])
+                    if value is not None:
+                        ious.append(value)
                 scores.extend(frame_score(mask_logits).cpu().tolist())
                 labels.extend(label.tolist())
+                methods.extend(method)
 
         mean_iou = float(np.mean(ious)) if ious else 0.0
         area = auroc(scores, labels)
+        ece = expected_calibration_error(scores, labels)
+        held_out = held_out_auroc(scores, labels, methods)
+
         history.append(
-            {"epoch": epoch, "train_loss": train_loss, "val_iou": mean_iou, "val_auroc": area}
+            {
+                "epoch": epoch,
+                "train_loss": train_loss,
+                "val_iou": mean_iou,
+                "val_auroc": area,
+                "val_ece": ece,
+                "val_auroc_held_out_method": held_out,
+                "n_localisable_frames": len(ious),
+            }
         )
+        held_out_text = "n/a" if math.isnan(held_out) else f"{held_out:.4f}"
         print(
             f"epoch {epoch:3d}/{args.epochs}  loss {train_loss:.4f}  "
-            f"IoU {mean_iou:.4f}  AUROC {area:.4f}"
+            f"IoU {mean_iou:.4f}  AUROC {area:.4f}  ECE {ece:.4f}  "
+            f"AUROC[{HELD_OUT_METHOD}] {held_out_text}"
         )
 
         if mean_iou > best_iou:
@@ -353,6 +445,9 @@ def main() -> int:
                             "fingerprint_source": fingerprint.mode,
                             "best_val_iou": best_iou,
                             "val_auroc": area,
+                            "val_ece": ece,
+                            "val_auroc_held_out_method": held_out,
+                            "held_out_method": HELD_OUT_METHOD,
                             "epochs": args.epochs,
                             "finished_utc": utc_now_iso(),
                             "device": str(device),

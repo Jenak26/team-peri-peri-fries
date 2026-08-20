@@ -31,24 +31,25 @@ def load_index(corpus_dir: str | Path = CORPUS_DIR) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def _frame_paths(corpus_dir: Path, sample: dict) -> list[Path]:
+def frame_paths(corpus_dir: Path, sample: dict) -> list[Path]:
+    """Sorted frame files for one corpus sample. Public: Stage C caching uses it."""
     return sorted((corpus_dir / sample["frames_dir"]).glob("*.png"))
 
 
-def _mask_paths(corpus_dir: Path, sample: dict) -> list[Path]:
+def mask_paths(corpus_dir: Path, sample: dict) -> list[Path]:
     if not sample.get("masks_dir"):
         return []
     return sorted((corpus_dir / sample["masks_dir"]).glob("*.png"))
 
 
-def _read_rgb(path: Path) -> np.ndarray:
+def read_rgb(path: Path) -> np.ndarray:
     image = cv2.imread(str(path), cv2.IMREAD_COLOR)
     if image is None:
         raise CorpusError(f"could not read frame: {path}")
     return cv2.cvtColor(image, cv2.COLOR_BGR2RGB).astype(np.float32) / 255.0
 
 
-def _read_mask(path: Path) -> np.ndarray:
+def read_mask(path: Path) -> np.ndarray:
     mask = cv2.imread(str(path), cv2.IMREAD_GRAYSCALE)
     if mask is None:
         raise CorpusError(f"could not read mask: {path}")
@@ -92,11 +93,21 @@ class ContrastivePatchDataset(Dataset):
                 f"authentic video only"
             )
         self.frames: list[list[Path]] = [
-            _frame_paths(self.corpus_dir, s) for s in self.samples
+            frame_paths(self.corpus_dir, s) for s in self.samples
         ]
         self.frames = [f for f in self.frames if len(f) >= 2]
         if not self.frames:
             raise CorpusError("authentic samples contain fewer than two frames each")
+
+    @property
+    def n_clips(self) -> int:
+        """Distinct source clips backing this stream.
+
+        NT-Xent draws its negatives from the other clips in the batch, so this
+        number - not `len(self)` - is what determines whether the objective has
+        anything to push apart. Stage A checks it before training.
+        """
+        return len(self.frames)
 
     def __len__(self) -> int:
         return self.length
@@ -124,8 +135,8 @@ class ContrastivePatchDataset(Dataset):
             candidates = paths
 
         first, second = rng.choice(len(candidates), size=2, replace=len(candidates) < 2)
-        image_a = _read_rgb(candidates[int(first)])
-        image_b = _read_rgb(candidates[int(second)])
+        image_a = read_rgb(candidates[int(first)])
+        image_b = read_rgb(candidates[int(second)])
 
         patch_a, _, _ = augment(self._crop(image_a, rng), None, rng, enable=("flip", "crop"))
         patch_b, _, _ = augment(self._crop(image_b, rng), None, rng, enable=("flip", "crop"))
@@ -164,8 +175,8 @@ class MaskDataset(Dataset):
         for sample in index["samples"]:
             if sample["split"] != split:
                 continue
-            frames = _frame_paths(self.corpus_dir, sample)
-            masks = _mask_paths(self.corpus_dir, sample)
+            frames = frame_paths(self.corpus_dir, sample)
+            masks = mask_paths(self.corpus_dir, sample)
             for position, frame in enumerate(frames):
                 mask = masks[position] if position < len(masks) else None
                 self.items.append((frame, mask, int(sample["label"]), sample["method"]))
@@ -195,9 +206,9 @@ class MaskDataset(Dataset):
         frame_path, mask_path, label, method = self.items[item]
         rng = np.random.default_rng(self.seed + item)
 
-        image = _read_rgb(frame_path)
+        image = read_rgb(frame_path)
         mask = (
-            _read_mask(mask_path)
+            read_mask(mask_path)
             if mask_path is not None
             else np.zeros(image.shape[:2], dtype=np.float32)
         )

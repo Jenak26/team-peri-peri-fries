@@ -1,6 +1,7 @@
 from peri.core import forensic_lr as flr
 from tools.selftest_lr import run_selftest
 
+
 def test_assertion_one_clear_manipulation_is_indicated():
     decision = run_selftest()["clear_manipulation"]
     assert decision.outcome == "MANIPULATION INDICATED"

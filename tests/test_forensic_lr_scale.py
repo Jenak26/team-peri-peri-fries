@@ -1,5 +1,7 @@
 import pytest
+
 from peri.core import forensic_lr as flr
+
 
 def test_constants_match_the_specification():
     assert flr.LOG10LR_DECISION_THRESHOLD == 1.0
@@ -52,7 +54,7 @@ def test_sentence_below_threshold_supports_neither():
     assert "neither proposition" in text
 
 def test_reason_codes_are_frozen_and_complete():
-    assert flr.REASON_CODES == frozenset(
+    assert frozenset(
         {
             "out-of-validated-domain",
             "sign-unstable-under-degradation",
@@ -61,4 +63,4 @@ def test_reason_codes_are_frozen_and_complete():
             "cross-stream-contradiction",
             "evidence-strength-below-reporting-threshold",
         }
-    )
+    ) == flr.REASON_CODES

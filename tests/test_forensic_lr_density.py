@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+
 from peri.core import forensic_lr as flr
 from peri.core.errors import CalibrationError
 
@@ -47,7 +48,7 @@ def test_logistic_lr_removes_the_fitted_prior():
     features = rng.normal(0.0, 1.0, (14, 3)).tolist()
     cal = flr.fit_stream_calibration("imb", hp, hd, features)
     assert cal.method == "logistic"
-    assert cal.prior_log_odds < 0.0  
+    assert cal.prior_log_odds < 0.0
     midpoint = flr.log10_lr(cal, 1.5)
     assert -1.0 < midpoint < 1.0
 

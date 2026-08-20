@@ -21,6 +21,7 @@ Run:
 from __future__ import annotations
 
 import argparse
+import math
 import time
 from pathlib import Path
 
@@ -69,7 +70,11 @@ def nt_xent(
     return F.cross_entropy(similarity, partner)
 
 
-def build_loader(args, split: str, length: int) -> DataLoader:
+MIN_CLIPS_FOR_CONTRASTIVE = 2
+
+
+def build_loader(args, split: str, length: int) -> tuple[DataLoader, int]:
+    """Return the loader and the number of distinct clips behind it."""
     dataset = ContrastivePatchDataset(
         corpus_dir=args.corpus,
         split=split,
@@ -78,7 +83,7 @@ def build_loader(args, split: str, length: int) -> DataLoader:
         length=length,
         seed=args.seed,
     )
-    return DataLoader(
+    loader = DataLoader(
         dataset,
         batch_size=args.batch_size,
         shuffle=False,  # the dataset is already an infinite seeded sampler
@@ -87,6 +92,7 @@ def build_loader(args, split: str, length: int) -> DataLoader:
         drop_last=True,
         persistent_workers=args.workers > 0,
     )
+    return loader, dataset.n_clips
 
 
 def main() -> int:
@@ -109,12 +115,44 @@ def main() -> int:
     device = torch.device(args.device)
     autocast_enabled = device.type == "cuda"
 
-    train_loader = build_loader(args, "train", args.pairs)
+    train_loader, n_train_clips = build_loader(args, "train", args.pairs)
+    if n_train_clips < MIN_CLIPS_FOR_CONTRASTIVE:
+        raise SystemExit(
+            f"the train split has {n_train_clips} authentic clip(s). NT-Xent takes "
+            f"its negatives from the other clips in the batch, so with fewer than "
+            f"{MIN_CLIPS_FOR_CONTRASTIVE} there is nothing to push apart and the "
+            f"loss is zero by construction. Add authentic source video to "
+            f"data/authentic and rebuild the corpus."
+        )
+    if n_train_clips < args.batch_size:
+        print(
+            f"[warn] {n_train_clips} authentic clips vs batch size {args.batch_size}: "
+            f"most in-batch pairs come from the same clip and are masked out of the "
+            f"negative set, so each step sees far fewer effective negatives than the "
+            f"batch size suggests. More source clips will help more than a bigger batch."
+        )
+
+    val_loader = None
     try:
-        val_loader = build_loader(args, "val", max(args.pairs // 10, args.batch_size))
-    except Exception as exc:  # noqa: BLE001 - a missing val split must not stop training
-        print(f"[warn] no validation split available ({exc}); training without it")
-        val_loader = None
+        candidate, n_val_clips = build_loader(
+            args, "val", max(args.pairs // 10, args.batch_size)
+        )
+    except Exception as exc:
+        print(f"[warn] no validation split available ({exc}); selecting on train loss")
+    else:
+        if n_val_clips < MIN_CLIPS_FOR_CONTRASTIVE:
+            # Every patch in the batch then comes from the same clip, every
+            # negative is masked out as a same-clip non-partner, and the softmax
+            # is left with a single unmasked column. Cross-entropy is exactly
+            # 0.0 no matter what the weights are. Selecting the best epoch on
+            # that number means selecting the first epoch, forever.
+            print(
+                f"[warn] the val split has {n_val_clips} authentic clip(s), which "
+                f"makes the contrastive validation loss identically zero and "
+                f"useless for checkpoint selection; selecting on train loss instead"
+            )
+        else:
+            val_loader = candidate
 
     model = DnCNN(depth=args.depth, width=args.width).to(device)
     head = ProjectionHead(in_channels=3, out_dim=STAGE_A.embed_dim).to(device)
@@ -191,7 +229,7 @@ def main() -> int:
             f"val {val_loss:.4f}  {elapsed:.0f}s"
         )
 
-        target = val_loss if val_loss == val_loss else train_loss
+        target = train_loss if math.isnan(val_loss) else val_loss
         if target < best:
             best = target
             torch.save(

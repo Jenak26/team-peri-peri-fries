@@ -82,26 +82,31 @@ def run_selftest() -> dict[str, flr.Decision]:
         "out_of_domain": out_of_domain,
     }
 
+
 def main() -> int:
     expectations = {
         "clear_manipulation": flr.OUTCOME_MANIPULATION,
         "unstable": flr.OUTCOME_INCONCLUSIVE,
         "out_of_domain": flr.OUTCOME_INCONCLUSIVE,
     }
-    
+
     results = run_selftest()
     failed = False
-    
+
     for name, expected in expectations.items():
-        actual = results[name].outcome
-        if actual == expected:
-            print(f"PASS: {name} -> {actual}")
+        decision = results[name]
+        if decision.outcome == expected:
+            reason = decision.primary_reason or "-"
+            print(
+                f"PASS  {name:20s} {decision.outcome:24s} "
+                f"log10LR {decision.log10lr_total:+.3f}  reason {reason}"
+            )
         else:
-            print(f"FAIL: {name} -> expected {expected}, got {actual}")
+            print(f"FAIL  {name:20s} expected {expected}, got {decision.outcome}")
             failed = True
-            
+
     return 1 if failed else 0
 
+
 if __name__ == "__main__":
-    import sys
-    sys.exit(main())
+    raise SystemExit(main())

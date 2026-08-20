@@ -23,7 +23,7 @@ from pathlib import Path
 
 import numpy as np
 import torch
-import torch.nn as nn
+from torch import nn
 
 MODE_LEARNED = "learned-videoprint"
 MODE_SRM = "srm-residual"

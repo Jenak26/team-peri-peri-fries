@@ -31,8 +31,18 @@ def _gaussian_kernel1d(sigma: float, radius: int) -> np.ndarray:
 
 
 def gaussian_blur(image: np.ndarray, sigma: float) -> np.ndarray:
-    """Separable Gaussian blur. Implemented here rather than via cv2 so the
-    augmentation is bit-identical across platforms for a given seed."""
+    """Separable Gaussian blur.
+
+    Implemented with numpy rather than cv2 so that a given seed produces the
+    same training stream regardless of which OpenCV build is installed on the
+    machine doing the training.
+
+    Measured at roughly 20 ms per 512x512x3 call. A whole-array tap
+    accumulation benchmarks the same to within noise, and
+    `scipy.ndimage.correlate1d` pads `reflect` differently and would silently
+    change the augmentation, so this stays as it is. At a 0.35 apply rate
+    across dataloader workers it is not the bottleneck.
+    """
     if sigma <= 0:
         return image
     radius = max(1, int(round(3.0 * sigma)))

@@ -1,5 +1,7 @@
 import math
+
 from peri.core import canon
+
 
 def test_q_rounds_to_six_places():
     assert canon.q(1 / 3) == 0.333333

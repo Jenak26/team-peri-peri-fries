@@ -3,6 +3,7 @@ import pytest
 
 from peri.core import forensic_lr as flr
 
+
 def build_cal(dim=3, seed=5, n=120):
     rng = np.random.default_rng(seed)
     hp = rng.normal(0.0, 1.0, n).tolist()
@@ -42,10 +43,25 @@ def test_sign_flipping_stress_scores_are_sign_unstable():
 
 def test_wide_but_same_signed_stress_is_merely_unstable():
     cal = build_cal()
-    # All positive LRs, but spread far wider than STABILITY_IQR_MAX.
-    result = flr.evaluate_stream(cal, obs(3.2, stress=(1.2, 3.0, 5.0, 6.0)))
+    # Scores chosen so every replica LR stays positive - the stream never changes
+    # its answer, it only changes how loudly it gives it. Asserted rather than
+    # assumed: with this calibration a score of 1.2 already sits below the
+    # crossover and would make this sign instability instead.
+    stress = (2.0, 3.0, 4.0, 5.0)
+    assert all(flr.log10_lr(cal, s) > 0.0 for s in stress)
+    result = flr.evaluate_stream(cal, obs(3.2, stress=stress))
+    assert result.iqr > flr.STABILITY_IQR_MAX
     assert result.usable is False
     assert result.exclusion_reason == "unstable-under-degradation"
+
+
+def test_crossover_scores_are_reported_as_sign_instability():
+    cal = build_cal()
+    # The mirror of the case above: a replica ladder that crosses the crossover
+    # point while one end is strong enough to have been reported.
+    result = flr.evaluate_stream(cal, obs(3.2, stress=(1.2, 3.0, 5.0, 6.0)))
+    assert result.usable is False
+    assert result.exclusion_reason == "sign-unstable-under-degradation"
 
 def test_tiny_wobble_around_zero_is_not_sign_instability():
     cal = build_cal()

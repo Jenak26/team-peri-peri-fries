@@ -3,10 +3,19 @@ __pycache__/
 *.pyc
 *.pt
 *.onnx
-evidence/
+# Evidence is examination output, never source. The directory itself is tracked
+# so that a fresh clone satisfies the phase-0 layout gate.
+evidence/*
+!evidence/.gitkeep
+
+# Corpus and source video are large and regenerable from train/build_corpus.py.
 data/authentic/*
 data/corpus/*
 !data/authentic/.gitkeep
 !data/corpus/.gitkeep
+
 web/vendor/*.js
+!web/.gitkeep
+
 .pytest_cache/
+.ruff_cache/
