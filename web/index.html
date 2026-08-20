@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Peri-Peri Fries Examination Console</title>
+  <style>
+    :root {
+      --paper: #f5f1e8;
+      --ink: #20231f;
+      --muted: #70756c;
+      --line: #d8d0c1;
+      --panel: #fffaf0;
+      --accent: #b94635;
+      --good: #386a54;
+      --warn: #a57225;
+      --mono: "Cascadia Mono", "SFMono-Regular", Consolas, monospace;
+      --sans: "Aptos", "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--sans);
+      background:
+        linear-gradient(90deg, rgba(32,35,31,.05) 1px, transparent 1px),
+        linear-gradient(rgba(32,35,31,.04) 1px, transparent 1px),
+        var(--paper);
+      background-size: 42px 42px;
+      color: var(--ink);
+    }
+    button, input { font: inherit; }
+    .shell { max-width: 1380px; margin: 0 auto; padding: 28px; }
+    header {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(280px, .6fr);
+      gap: 24px;
+      align-items: end;
+      min-height: 230px;
+      border-bottom: 1px solid var(--ink);
+    }
+    h1 { font-size: clamp(38px, 6vw, 88px); line-height: .88; margin: 0 0 18px; letter-spacing: 0; max-width: 900px; }
+    .kicker, .mono { font-family: var(--mono); letter-spacing: .02em; }
+    .kicker { color: var(--accent); text-transform: uppercase; font-size: 12px; margin-bottom: 16px; }
+    .brief { color: var(--muted); line-height: 1.55; max-width: 680px; margin: 0 0 24px; }
+    .status-strip { border-left: 2px solid var(--accent); padding-left: 18px; display: grid; gap: 10px; }
+    .status-strip div { display: flex; justify-content: space-between; gap: 16px; font-family: var(--mono); font-size: 13px; }
+    main { display: grid; grid-template-columns: 330px minmax(0, 1fr); gap: 28px; padding-top: 28px; }
+    aside { position: sticky; top: 20px; align-self: start; }
+    .drop {
+      border: 1px dashed var(--ink);
+      background: rgba(255,250,240,.72);
+      padding: 22px;
+      min-height: 220px;
+      display: grid;
+      align-content: center;
+      gap: 14px;
+      transition: transform .25s ease, background .25s ease;
+    }
+    .drop.active { transform: translateY(-2px); background: #fffdf7; }
+    .drop strong { font-size: 22px; line-height: 1.1; }
+    .file-input { width: 100%; border: 1px solid var(--line); padding: 10px; background: var(--panel); }
+    .btn {
+      border: 1px solid var(--ink);
+      background: var(--ink);
+      color: var(--paper);
+      padding: 11px 14px;
+      cursor: pointer;
+      transition: transform .18s ease, background .18s ease;
+    }
+    .btn:active { transform: translateY(1px); }
+    .btn.secondary { background: transparent; color: var(--ink); }
+    .stack { display: grid; gap: 18px; }
+    section { border-top: 1px solid var(--line); padding: 24px 0; }
+    section:first-child { border-top: 0; padding-top: 0; }
+    .section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+    h2 { font-size: 24px; margin: 0; letter-spacing: 0; }
+    .tag { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+    .grid-two { display: grid; grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr); gap: 18px; }
+    .viewer {
+      min-height: 340px;
+      background: #1f2420;
+      color: #f6f1e7;
+      border: 1px solid var(--ink);
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      position: relative;
+    }
+    .viewer img { width: 100%; height: 100%; object-fit: contain; display: block; }
+    .empty { color: var(--muted); padding: 24px; text-align: center; }
+    .metrics {
+      display: grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 1px;
+      background: var(--line);
+      border: 1px solid var(--line);
+    }
+    .metric { background: var(--panel); padding: 18px; min-height: 92px; }
+    .metric span { color: var(--muted); font-family: var(--mono); font-size: 12px; }
+    .metric b { display: block; font-size: 28px; margin-top: 8px; overflow-wrap: anywhere; }
+    .timeline {
+      height: 140px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      display: flex;
+      align-items: end;
+      gap: 2px;
+      padding: 16px;
+      overflow-x: auto;
+    }
+    .bar { min-width: 8px; background: var(--accent); opacity: .35; cursor: pointer; transition: opacity .2s ease, transform .2s ease; }
+    .bar.confident { opacity: .82; }
+    .bar:hover { transform: scaleY(1.08); }
+    .ledger { border: 1px solid var(--line); background: var(--panel); max-height: 320px; overflow: auto; }
+    .ledger-row { display: grid; grid-template-columns: 54px 180px 1fr; gap: 12px; padding: 10px 12px; border-bottom: 1px solid var(--line); font-family: var(--mono); font-size: 12px; }
+    .dial {
+      border: 1px solid var(--ink);
+      min-height: 210px;
+      display: grid;
+      grid-template-columns: 190px 1fr;
+      gap: 24px;
+      align-items: center;
+      padding: 22px;
+      background: var(--panel);
+    }
+    .dial-face {
+      width: 170px; height: 170px; border-radius: 50%; border: 1px solid var(--ink);
+      display: grid; place-items: center; font-family: var(--mono); position: relative;
+      background: conic-gradient(from 220deg, var(--good), var(--paper) 45%, var(--warn) 62%, var(--accent));
+    }
+    .dial-face::after { content: ""; width: 116px; height: 116px; border-radius: 50%; background: var(--panel); position: absolute; }
+    .dial-face b { position: relative; z-index: 1; font-size: 24px; }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+    .notice { color: var(--muted); font-size: 13px; line-height: 1.45; }
+    @media (max-width: 900px) {
+      .shell { padding: 18px; }
+      header, main, .grid-two, .dial { grid-template-columns: 1fr; }
+      aside { position: static; }
+      h1 { font-size: 46px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div>
+        <div class="kicker">forensic examination console</div>
+        <h1>Peri-Peri Fries</h1>
+        <p class="brief">A local, hash-led video examination workflow. Upload an exhibit, watch the ledger fill, inspect the residual view, read the timeline, and generate the report artifact.</p>
+      </div>
+      <div class="status-strip">
+        <div><span>MODE</span><b id="mode">fallback-ready</b></div>
+        <div><span>EVIDENCE</span><b id="evidence">none</b></div>
+        <div><span>LEDGER</span><b id="ledgerState">idle</b></div>
+      </div>
+    </header>
+    <main>
+      <aside>
+        <form id="uploadForm" class="drop">
+          <strong>Drop a video exhibit</strong>
+          <p class="notice">The API keeps the original sealed and works from a byte-identical copy. Current local build runs without checkpoints.</p>
+          <input id="file" class="file-input" type="file" accept="video/*" />
+          <button class="btn" type="submit">Start Examination</button>
+        </form>
+        <div class="actions">
+          <button id="reportBtn" class="btn secondary" type="button">Generate Report</button>
+          <button id="replayBtn" class="btn secondary" type="button">Verify Replay</button>
+        </div>
+      </aside>
+      <div class="stack">
+        <section>
+          <div class="section-head"><h2>Exhibit Signal</h2><span class="tag">RGB / residual overlay</span></div>
+          <div class="grid-two">
+            <div class="viewer" id="viewer"><div class="empty">Top suspect frame appears here after examination.</div></div>
+            <div class="metrics">
+              <div class="metric"><span>original SHA-256</span><b id="sha">waiting</b></div>
+              <div class="metric"><span>outcome</span><b id="outcome">not run</b></div>
+              <div class="metric"><span>videoprint mode</span><b id="vpMode">unknown</b></div>
+              <div class="metric"><span>temporal mode</span><b id="tmpMode">unknown</b></div>
+            </div>
+          </div>
+        </section>
+        <section>
+          <div class="section-head"><h2>Tamper Timeline</h2><span class="tag">greyed bars are lower reliability</span></div>
+          <div id="timeline" class="timeline"><div class="empty">No frame scores yet.</div></div>
+        </section>
+        <section>
+          <div class="section-head"><h2>Fragility</h2><span class="tag">self-attack panel</span></div>
+          <div class="metric"><span>current statement</span><b id="fragility">not assessed</b></div>
+        </section>
+        <section>
+          <div class="section-head"><h2>Decision</h2><span class="tag">log10LR surface</span></div>
+          <div class="dial">
+            <div class="dial-face"><b id="lr">0.0</b></div>
+            <div>
+              <h2 id="verbal">No reportable LR yet</h2>
+              <p id="sentence" class="notice">Calibration is required before likelihood-ratio language is shown.</p>
+              <p id="replay" class="mono notice"></p>
+            </div>
+          </div>
+        </section>
+        <section>
+          <div class="section-head"><h2>Ledger</h2><span class="tag">live hash chain</span></div>
+          <div id="ledger" class="ledger"><div class="ledger-row"><span>seq</span><span>event</span><span>hash</span></div></div>
+        </section>
+      </div>
+    </main>
+  </div>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    let currentEvidence = null;
+
+    function addLedger(row) {
+      const div = document.createElement("div");
+      div.className = "ledger-row";
+      div.innerHTML = `<span>${row.seq}</span><span>${row.event}</span><span>${row.hash}</span>`;
+      $("ledger").appendChild(div);
+      $("ledgerState").textContent = row.event;
+    }
+
+    function renderTimeline(items) {
+      const box = $("timeline");
+      box.innerHTML = "";
+      if (!items || !items.length) {
+        box.innerHTML = '<div class="empty">No frame scores yet.</div>';
+        return;
+      }
+      items.forEach((row) => {
+        const bar = document.createElement("div");
+        bar.className = "bar" + (row.confident ? " confident" : "");
+        bar.style.height = `${Math.max(4, row.score * 110)}px`;
+        bar.title = `frame ${row.index} score ${row.score}`;
+        bar.onclick = () => showFrame(row.index);
+        box.appendChild(bar);
+      });
+    }
+
+    function showFrame(index) {
+      if (!currentEvidence) return;
+      $("viewer").innerHTML = `<img alt="Selected overlay" src="/frames/${currentEvidence}/overlay_${String(index).padStart(4, "0")}.png" />`;
+    }
+
+    async function loadFindings(evidenceId) {
+      const res = await fetch(`/findings/${evidenceId}`);
+      const f = await res.json();
+      currentEvidence = f.evidence_id;
+      $("evidence").textContent = f.evidence_id;
+      $("sha").textContent = f.exhibit.original_sha256;
+      $("outcome").textContent = f.decision.outcome;
+      $("vpMode").textContent = f.models.modes.acquisition;
+      $("tmpMode").textContent = f.models.modes.temporal;
+      $("fragility").textContent = f.fragility.statement;
+      $("lr").textContent = f.decision.log10lr_total;
+      $("verbal").textContent = f.decision.verbal;
+      $("sentence").textContent = f.decision.sentence;
+      renderTimeline(f.localisation.timeline);
+      const first = f.localisation.top_suspect_frames[0];
+      if (first) showFrame(first.index);
+    }
+
+    $("uploadForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      try {
+        const file = $("file").files[0];
+        if (!file) {
+          alert("Please select a file first.");
+          return;
+        }
+        $("mode").textContent = "running";
+        $("ledger").innerHTML = '<div class="ledger-row"><span>seq</span><span>event</span><span>hash</span></div>';
+        
+        const data = new FormData();
+        data.append("file", file);
+        
+        const res = await fetch("/examine", { method: "POST", body: data });
+        if (!res.ok) {
+          throw new Error(`Server returned ${res.status}: ${await res.text()}`);
+        }
+        
+        const job = await res.json();
+        const source = new EventSource(`/status/${job.job_id}`);
+        
+        source.addEventListener("job", (e) => {
+          const state = JSON.parse(e.data);
+          if (state.evidence_id) currentEvidence = state.evidence_id;
+          if (state.state === "done") {
+            $("mode").textContent = "done";
+            loadFindings(state.evidence_id);
+            source.close();
+          }
+          if (state.state === "error") {
+            $("mode").textContent = "error";
+            $("sentence").textContent = state.error;
+            source.close();
+          }
+        });
+        
+        source.addEventListener("ledger", (e) => addLedger(JSON.parse(e.data)));
+        source.addEventListener("error", (e) => {
+          console.error("SSE Error", e);
+          source.close();
+        });
+      } catch (err) {
+        alert("Error starting examination: " + err.message);
+        $("mode").textContent = "error";
+        $("sentence").textContent = err.message;
+      }
+    });
+
+    $("reportBtn").onclick = () => {
+      if (currentEvidence) window.open(`/report/${currentEvidence}`, "_blank");
+    };
+    $("replayBtn").onclick = async () => {
+      if (!currentEvidence) return;
+      const res = await fetch(`/replay/${currentEvidence}`, { method: "POST" });
+      const data = await res.json();
+      $("replay").textContent = `${data.match ? "match" : "mismatch"} ${data.original_hash} / ${data.replay_hash}`;
+    };
+  </script>
+</body>
+</html>

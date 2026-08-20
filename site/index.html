@@ -1,0 +1,504 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Peri-Peri Fries - Judicial Digital Evidence Authentication Engine</title>
+<meta name="description" content="A forensic examination protocol engine. One video exhibit in; a likelihood ratio between two stated propositions, a fragility index, a mandatory abstention path, and a replayable hash-sealed record out." />
+<style>
+  :root {
+    --paper: #f5f1e8;
+    --ink: #20231f;
+    --muted: #70756c;
+    --line: #d8d0c1;
+    --panel: #fffaf0;
+    --accent: #b94635;
+    --good: #386a54;
+    --warn: #a57225;
+    --mono: "Cascadia Mono", "SFMono-Regular", Consolas, monospace;
+    --sans: "Aptos", "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    font-family: var(--sans);
+    background:
+      linear-gradient(90deg, rgba(32,35,31,.05) 1px, transparent 1px),
+      linear-gradient(rgba(32,35,31,.04) 1px, transparent 1px),
+      var(--paper);
+    background-size: 42px 42px;
+    color: var(--ink);
+    line-height: 1.55;
+  }
+  .shell { max-width: 1180px; margin: 0 auto; padding: 28px; }
+  .mono, .kicker { font-family: var(--mono); letter-spacing: .02em; }
+  .kicker { color: var(--accent); text-transform: uppercase; font-size: 12px; margin: 0 0 16px; }
+  a { color: var(--accent); }
+
+  header { border-bottom: 1px solid var(--ink); padding-bottom: 28px; }
+  h1 { font-size: clamp(38px, 7vw, 86px); line-height: .9; margin: 0 0 18px; max-width: 15ch; }
+  .lede { font-size: clamp(17px, 2vw, 20px); max-width: 68ch; margin: 0 0 22px; }
+  .lede strong { background: rgba(185,70,53,.12); padding: 0 4px; }
+  .repo-links { display: flex; flex-wrap: wrap; gap: 10px; }
+  .btn {
+    display: inline-block; border: 1px solid var(--ink); background: var(--ink);
+    color: var(--paper); padding: 10px 16px; text-decoration: none;
+    font-family: var(--mono); font-size: 13px;
+  }
+  .btn.secondary { background: transparent; color: var(--ink); }
+  .btn:hover { background: var(--accent); border-color: var(--accent); color: var(--paper); }
+
+  .strip {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 1px; background: var(--line); border: 1px solid var(--line); margin: 28px 0 0;
+  }
+  .strip div { background: var(--panel); padding: 16px 18px; }
+  .strip span { display: block; color: var(--muted); font-family: var(--mono); font-size: 11px; text-transform: uppercase; }
+  .strip b { display: block; font-size: 21px; margin-top: 6px; overflow-wrap: anywhere; }
+
+  section { border-top: 1px solid var(--line); padding: 40px 0 8px; }
+  h2 { font-size: clamp(24px, 3vw, 34px); margin: 0 0 6px; }
+  h3 { font-size: 18px; margin: 26px 0 8px; }
+  .sub { color: var(--muted); margin: 0 0 22px; max-width: 72ch; }
+
+  table { border-collapse: collapse; width: 100%; background: var(--panel); border: 1px solid var(--line); }
+  th, td { text-align: left; padding: 11px 14px; border-bottom: 1px solid var(--line); vertical-align: top; font-size: 14px; }
+  th { font-family: var(--mono); font-size: 11px; text-transform: uppercase; color: var(--muted); }
+  tr:last-child td { border-bottom: 0; }
+  td.num, td.hash { font-family: var(--mono); font-size: 12.5px; overflow-wrap: anywhere; }
+  .scroll-x { overflow-x: auto; }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); }
+  .card { background: var(--panel); padding: 20px; }
+  .card b { display: block; font-size: 16px; margin-bottom: 6px; }
+  .card p { margin: 0; color: var(--muted); font-size: 14px; }
+  .card .n { font-family: var(--mono); font-size: 11px; color: var(--accent); }
+
+  .props { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; }
+  .prop { border: 1px solid var(--ink); background: var(--panel); padding: 22px; }
+  .prop .h { font-family: var(--mono); color: var(--accent); font-size: 13px; margin-bottom: 10px; }
+  .prop p { margin: 0; font-size: 17px; }
+
+  .snapshot-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 22px; align-items: start; }
+  .viewer { background: #1f2420; border: 1px solid var(--ink); display: grid; place-items: center; min-height: 300px; overflow: hidden; }
+  .viewer img { width: 100%; height: auto; display: block; image-rendering: pixelated; }
+  .timeline {
+    height: 150px; border: 1px solid var(--line); background: var(--panel);
+    display: flex; align-items: flex-end; gap: 2px; padding: 14px; overflow-x: auto;
+  }
+  .bar { min-width: 7px; flex: 1; background: var(--accent); opacity: .3; }
+  .bar.confident { opacity: .85; }
+  .dial { border: 1px solid var(--ink); background: var(--panel); display: grid; grid-template-columns: 180px minmax(0, 1fr); }
+  .dial-face { background: var(--ink); color: var(--paper); display: grid; place-items: center; padding: 24px; }
+  .dial-face b { font-size: 46px; font-family: var(--mono); }
+  .dial-face span { font-family: var(--mono); font-size: 11px; opacity: .7; }
+  .dial-body { padding: 22px; }
+  .dial-body h4 { margin: 0 0 8px; font-size: 22px; }
+  .badge { display: inline-block; font-family: var(--mono); font-size: 11px; padding: 3px 9px; border: 1px solid currentColor; margin: 0 6px 6px 0; }
+  .badge.amber { color: var(--warn); }
+  .badge.green { color: var(--good); }
+  .badge.red { color: var(--accent); }
+
+  .note { border-left: 3px solid var(--accent); padding: 4px 0 4px 16px; color: var(--muted); margin: 18px 0; max-width: 74ch; }
+  .verbatim { border: 1px solid var(--ink); background: var(--panel); padding: 24px; font-size: 15.5px; max-width: 78ch; }
+  .loading { color: var(--muted); font-family: var(--mono); font-size: 13px; padding: 18px; }
+
+  footer { border-top: 1px solid var(--ink); margin-top: 44px; padding: 26px 0 40px; color: var(--muted); font-size: 14px; }
+
+  @media (max-width: 860px) {
+    .snapshot-grid { grid-template-columns: 1fr; }
+    .dial { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <header>
+    <p class="kicker">Team Peri Peri Fries &middot; forensic examination protocol engine</p>
+    <h1>Evidence a court can weigh.</h1>
+    <p class="lede">
+      This is <strong>not a deepfake detector</strong>. It takes one video exhibit and returns a
+      base-10 likelihood ratio between two explicitly stated propositions, a declaration of
+      whether the exhibit even falls inside the population it was calibrated on, the exact
+      laundering strength at which its own conclusion breaks, a mandatory abstention path, and
+      a hash-sealed examination record that a second run reproduces byte-for-byte.
+    </p>
+    <p class="lede" style="font-size:16px;color:var(--muted)">
+      Every existing tool outputs <span class="mono">P(fake) = 0.97</span>. A court cannot do
+      anything with that number: no stated propositions, no declared population, no validated
+      domain, no uncertainty, no way to reproduce it. The deliverable here is not a better
+      score &mdash; it is a verdict that can be cross-examined, including the verdict
+      &ldquo;inconclusive&rdquo;.
+    </p>
+    <div class="repo-links">
+      <a class="btn" href="https://github.com/Jenak26/team-peri-peri-fries">Source on GitHub</a>
+      <a class="btn secondary" href="#snapshot">Examination snapshot</a>
+      <a class="btn secondary" href="https://github.com/Jenak26/team-peri-peri-fries/blob/master/docs/METHODOLOGY.md">Methodology &amp; limitations</a>
+      <a class="btn secondary" href="https://github.com/Jenak26/team-peri-peri-fries/blob/master/docs/TRAINING.md">Training guide</a>
+    </div>
+
+    <div class="strip" id="strip">
+      <div><span>outcome</span><b id="s-outcome">&mdash;</b></div>
+      <div><span>log<sub>10</sub> LR</span><b id="s-lr">&mdash;</b></div>
+      <div><span>fragility band</span><b id="s-frag">&mdash;</b></div>
+      <div><span>findings hash</span><b id="s-hash" class="mono" style="font-size:13px">&mdash;</b></div>
+    </div>
+  </header>
+
+  <section>
+    <h2>The two propositions</h2>
+    <p class="sub">
+      Stated verbatim in the code, in the API response, and on the report's findings page.
+      Everything the system reports is a ratio between exactly these two, and nothing else.
+    </p>
+    <div class="props">
+      <div class="prop">
+        <div class="h">H<sub>p</sub> &mdash; prosecution-neutral</div>
+        <p>The exhibit is an unmanipulated recording of a real event.</p>
+      </div>
+      <div class="prop">
+        <div class="h">H<sub>d</sub> &mdash; alternative</div>
+        <p>The exhibit is synthetically generated or materially manipulated in the facial region.</p>
+      </div>
+    </div>
+    <p class="note">
+      A likelihood ratio answers <em>how much more probable are these findings if H<sub>d</sub> is
+      true than if H<sub>p</sub> is true</em> &mdash; a question about the evidence. It deliberately
+      does not answer <em>is this video fake</em>, which is a question about the world, and which
+      belongs to the Court.
+    </p>
+  </section>
+
+  <section>
+    <h2>What comes out of one exhibit</h2>
+    <p class="sub">Seven outputs, each designed against what a cross-examination would attack.</p>
+    <div class="cards">
+      <div class="card"><span class="n">01</span><b>Likelihood ratio</b><p>A log<sub>10</sub> LR between the two propositions above, with the ENFSI verbal equivalent and the supported proposition always named.</p></div>
+      <div class="card"><span class="n">02</span><b>Tamper localisation</b><p>Pixel-level mask, reliability map, and a per-frame tamper timeline from an acquisition-consistency network.</p></div>
+      <div class="card"><span class="n">03</span><b>Evidence Fragility Index</b><p>An adversarial binary search for the minimum laundering strength at which our own verdict flips.</p></div>
+      <div class="card"><span class="n">04</span><b>Validated-domain check</b><p>A Mahalanobis gate answering whether this exhibit is inside the population we calibrated on.</p></div>
+      <div class="card"><span class="n">05</span><b>Mandatory abstention</b><p><span class="mono">INCONCLUSIVE</span> with machine-generated reason codes. An instrument that always answers is sometimes wrong without saying so.</p></div>
+      <div class="card"><span class="n">06</span><b>Replayable record</b><p>An append-only SHA-256 hash chain of every examination event; a second run yields a byte-identical findings hash.</p></div>
+      <div class="card"><span class="n">07</span><b>Examiner's report</b><p>A nine-page PDF structured against India's Section 63(4) BSA Part-B expert declaration, watermarked as a draft for human review.</p></div>
+    </div>
+  </section>
+
+  <section id="snapshot">
+    <h2>Examination snapshot</h2>
+    <p class="sub">
+      A real examination record produced by this repository, rendered read-only. The numbers,
+      hashes, ledger entries and overlays below are the actual output of the pipeline on the
+      deterministic fixture exhibit &mdash; nothing here is illustrative.
+    </p>
+    <p class="note">
+      This page is static. The live console (drop a file, watch the ledger append, generate the
+      PDF, verify the replay) runs against the local FastAPI service, because an examination
+      workstation is deliberately offline. See <span class="mono">Quickstart</span> in the
+      repository README to run it.
+    </p>
+
+    <div id="snap-body">
+      <p class="loading">Loading examination record&hellip;</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>The decision gate</h2>
+    <p class="sub">Exactly three outcomes. Abstention is a first-class result, not a failure.</p>
+    <div class="scroll-x">
+      <table>
+        <thead><tr><th>Condition</th><th>Outcome</th></tr></thead>
+        <tbody>
+          <tr><td>No stream survives the in-domain and stability gates</td><td class="num">INCONCLUSIVE &middot; no-usable-stream</td></tr>
+          <tr><td>Two usable streams with |log<sub>10</sub>LR| &gt; 1 pointing opposite ways</td><td class="num">INCONCLUSIVE &middot; cross-stream-contradiction</td></tr>
+          <tr><td>Fused |log<sub>10</sub>LR| below the reporting threshold of 1.0</td><td class="num">INCONCLUSIVE &middot; evidence-strength-below-reporting-threshold</td></tr>
+          <tr><td>Fragility band is HIGH &mdash; the conclusion does not survive ordinary recompression</td><td class="num">INCONCLUSIVE &middot; fragility-high</td></tr>
+          <tr><td>Fused log<sub>10</sub>LR &gt; 0</td><td class="num">MANIPULATION INDICATED</td></tr>
+          <tr><td>Fused log<sub>10</sub>LR &lt; 0</td><td class="num">AUTHENTICITY SUPPORTED</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>ENFSI verbal scale, applied to |log<sub>10</sub>LR|</h3>
+    <div class="scroll-x">
+      <table>
+        <thead><tr><th>Range</th><th>Verbal equivalent</th></tr></thead>
+        <tbody>
+          <tr><td class="num">&lt; 1</td><td>no support</td></tr>
+          <tr><td class="num">1 &ndash; 2</td><td>moderate support</td></tr>
+          <tr><td class="num">2 &ndash; 3</td><td>moderately strong support</td></tr>
+          <tr><td class="num">3 &ndash; 4</td><td>strong support</td></tr>
+          <tr><td class="num">4 &ndash; 5</td><td>very strong support</td></tr>
+          <tr><td class="num">&gt; 5</td><td>extremely strong support</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Attacking our own conclusion</h2>
+    <p class="sub">
+      The Evidence Fragility Index binary-searches three independent laundering axes for the
+      minimum strength at which the verdict changes, and reports the answer in court-legible
+      units rather than in model confidence.
+    </p>
+    <p class="note">
+      <strong>The hard rule:</strong> the augmentation families used to train the models and the
+      transform families used by the fragility search are disjoint, in both family and parameter
+      range, and the assertion that enforces it runs at import time. If a model were trained on
+      the same degradation we then use to test it, the robustness claim would be circular and
+      would not survive questioning.
+    </p>
+  </section>
+
+  <section>
+    <h2>Determinism and replay</h2>
+    <p class="sub">
+      Reproducibility is a feature of the instrument, not a property of the run. Every float is
+      quantised, every JSON key sorted, every seed fixed and derived by digest rather than by a
+      salted built-in hash. Re-running an examination from its manifest produces the same
+      findings hash, byte for byte &mdash; and the dashboard shows the two hashes side by side.
+    </p>
+  </section>
+
+  <section>
+    <h2>Limitations, stated on the report itself</h2>
+    <p class="sub">Page 8 of every generated report carries this text verbatim and unaltered.</p>
+    <div class="verbatim">
+      Automated detection is probabilistic. Absence of detected manipulation does not establish
+      authenticity. Findings are conditional on the declared validated domain; exhibits outside
+      that domain are reported as inconclusive. This report is forensic decision support
+      prepared to assist an examiner. It does not itself constitute the certificate under
+      Section 63(4) of the Bharatiya Sakshya Adhiniyam, 2023, and does not determine
+      admissibility or evidentiary weight, which are matters for the Court.
+    </div>
+    <p class="note">
+      C2PA precedence: a C2PA manifest verifies that provenance claims have not been tampered
+      with, not that they are truthful. Where forensic findings contradict a manifest, the
+      forensic findings take precedence and both are reported.
+    </p>
+  </section>
+
+  <footer>
+    <p>
+      Built by Janak Kabra, Atharva Agrawal, Varad Shelar and Vasu Agrawal.
+      Source released under the MIT License; please also read the forensic-use notice in the
+      repository. The permission grant covers the source code and is not a warranty of fitness
+      for any evidentiary, investigative, or judicial purpose.
+    </p>
+    <p>
+      Prior art this work consumes and credits: Noiseprint (2019), TruFor (CVPR 2023),
+      DiCoME (ICML 2026), DTRA (ICMR 2026), GenD (WACV 2026), the NTIRE 2026 Robust Deepfake
+      Detection Challenge, and C2PA.
+    </p>
+  </footer>
+
+</div>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+
+  function esc(value) {
+    return String(value == null ? "" : value).replace(/[&<>"']/g, function (ch) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch];
+    });
+  }
+
+  function bandClass(band) {
+    if (band === "LOW") return "green";
+    if (band === "HIGH") return "red";
+    return "amber";
+  }
+
+  function outcomeClass(outcome) {
+    if (outcome === "INCONCLUSIVE") return "amber";
+    if (outcome === "AUTHENTICITY SUPPORTED") return "green";
+    return "red";
+  }
+
+  function bytes(n) {
+    if (!n && n !== 0) return "unknown";
+    if (n < 1024) return n + " B";
+    if (n < 1048576) return (n / 1024).toFixed(1) + " KB";
+    return (n / 1048576).toFixed(1) + " MB";
+  }
+
+  function renderTimeline(timeline) {
+    if (!timeline || !timeline.length) return '<p class="loading">No frame scores recorded.</p>';
+    var max = 1;
+    timeline.forEach(function (row) { if (row.score > max) max = row.score; });
+    var bars = timeline.map(function (row) {
+      var h = Math.max(4, Math.round((row.score / max) * 118));
+      return '<div class="bar' + (row.confident ? " confident" : "") +
+        '" style="height:' + h + 'px" title="frame ' + esc(row.index) +
+        " score " + esc(row.score) + '"></div>';
+    }).join("");
+    return '<div class="timeline">' + bars + "</div>";
+  }
+
+  function renderFragility(fragility) {
+    if (!fragility || !fragility.axes) return "";
+    var order = ["reencode_crf", "rescale", "jpeg_quality"];
+    var names = {
+      reencode_crf: "Codec re-encode",
+      rescale: "Spatial rescale",
+      jpeg_quality: "JPEG recompression"
+    };
+    var rows = order.map(function (key) {
+      var axis = fragility.axes[key];
+      if (!axis) return "";
+      return "<tr><td>" + esc(names[key] || key) + "</td>" +
+        '<td class="num">' + esc(axis.label_survives) + "</td>" +
+        '<td class="num">' + esc(axis.label_flips || "did not flip on any tested rung") + "</td>" +
+        '<td class="num">' + esc(axis.n_evaluations) + "</td></tr>";
+    }).join("");
+    return '<h3>Evidence Fragility Index</h3>' +
+      '<p class="sub">' + esc(fragility.statement) + "</p>" +
+      '<div class="scroll-x"><table><thead><tr><th>Axis</th><th>Survives to</th>' +
+      "<th>Flips at</th><th>Probes</th></tr></thead><tbody>" + rows + "</tbody></table></div>";
+  }
+
+  function renderLedger(ledger) {
+    if (!ledger || !ledger.length) return "";
+    var rows = ledger.map(function (row) {
+      return "<tr><td class=\"num\">" + esc(row.seq) + "</td>" +
+        '<td class="num">' + esc(row.event) + "</td>" +
+        '<td class="num">' + esc(row.utc || "") + "</td>" +
+        '<td class="hash">' + esc(String(row.hash || "").slice(0, 32)) + "&hellip;</td></tr>";
+    }).join("");
+    return "<h3>Chain of custody &mdash; append-only SHA-256 ledger</h3>" +
+      '<p class="sub">Each entry commits to the digest of the one before it. The original exhibit ' +
+      "is opened read-only and never written to; all work happens on a hash-matched copy.</p>" +
+      '<div class="scroll-x"><table><thead><tr><th>Seq</th><th>Event</th><th>Recorded (UTC)</th>' +
+      "<th>Entry hash</th></tr></thead><tbody>" + rows + "</tbody></table></div>";
+  }
+
+  function renderStreams(f) {
+    var s = f.streams || {};
+    var rows = "";
+    if (s.provenance) {
+      rows += "<tr><td>Provenance (S4)</td><td>rule-based, zero ML</td>" +
+        '<td class="num">' + esc(s.provenance.score) + "</td></tr>";
+    }
+    if (s.acquisition) {
+      rows += "<tr><td>Acquisition consistency</td><td>" +
+        esc((f.models && f.models.modes && f.models.modes.acquisition) || "") + "</td>" +
+        '<td class="num">' + esc(s.acquisition.score) + "</td></tr>";
+    }
+    if (s.temporal) {
+      rows += "<tr><td>Temporal aggregation</td><td>" +
+        esc((f.models && f.models.modes && f.models.modes.temporal) || "") + "</td>" +
+        '<td class="num">' + esc(s.temporal.score) + "</td></tr>";
+    }
+    return "<h3>Streams</h3><div class=\"scroll-x\"><table><thead><tr><th>Stream</th>" +
+      "<th>Mode</th><th>Score</th></tr></thead><tbody>" + rows + "</tbody></table></div>";
+  }
+
+  function render(f) {
+    var decision = f.decision || {};
+    var exhibit = f.exhibit || {};
+    var fragility = f.fragility || {};
+
+    $("s-outcome").textContent = decision.outcome || "unknown";
+    $("s-lr").textContent = (decision.log10lr_total === undefined ? "-" : decision.log10lr_total);
+    $("s-frag").textContent = fragility.band || "not assessed";
+    $("s-hash").textContent = String(f.findings_hash || "").slice(0, 16) + "…";
+
+    var codes = (decision.reason_codes || []).map(function (c) {
+      return '<span class="badge amber">' + esc(c) + "</span>";
+    }).join("");
+
+    var overlay = "";
+    var top = (f.localisation && f.localisation.top_suspect_frames) || [];
+    if (top.length) {
+      var idx = String(top[0].index);
+      while (idx.length < 4) idx = "0" + idx;
+      overlay = '<img alt="Tamper mask overlay on the top suspect frame" src="demo/overlay_' + idx + '.png" />';
+    } else {
+      overlay = '<p class="loading" style="color:#f6f1e7">No suspect frame recorded.</p>';
+    }
+
+    var container = exhibit.container || {};
+    var video = container.video || {};
+
+    var html =
+      '<div class="snapshot-grid">' +
+        '<div>' +
+          '<div class="viewer">' + overlay + "</div>" +
+          '<p class="sub" style="margin-top:10px;font-size:13px">' +
+            "Top suspect frame with the tamper mask overlaid. Regions the model is not confident " +
+            "about are shaded down rather than hidden." +
+          "</p>" +
+        "</div>" +
+        '<div>' +
+          '<div class="dial">' +
+            '<div class="dial-face"><span>log10 LR</span><b>' +
+              esc(decision.log10lr_total === undefined ? "-" : decision.log10lr_total) +
+            "</b></div>" +
+            '<div class="dial-body">' +
+              "<h4>" + esc(decision.outcome || "unknown") + "</h4>" +
+              '<p style="margin:0 0 10px"><span class="badge ' + outcomeClass(decision.outcome) +
+                '">' + esc(decision.verbal || "no support") + "</span>" + codes + "</p>" +
+              '<p style="margin:0;color:var(--muted);font-size:14px">' +
+                esc(decision.sentence || "") + "</p>" +
+            "</div>" +
+          "</div>" +
+          '<div class="strip" style="margin-top:18px">' +
+            "<div><span>evidence id</span><b class=\"mono\" style=\"font-size:13px\">" +
+              esc(f.evidence_id) + "</b></div>" +
+            "<div><span>fragility</span><b><span class=\"badge " + bandClass(fragility.band) +
+              '">' + esc(fragility.band || "n/a") + "</span></b></div>" +
+          "</div>" +
+          '<div class="scroll-x" style="margin-top:18px"><table><tbody>' +
+            "<tr><th>Original SHA-256</th><td class=\"hash\">" + esc(exhibit.original_sha256) + "</td></tr>" +
+            "<tr><th>Working copy SHA-256</th><td class=\"hash\">" + esc(exhibit.working_sha256) + "</td></tr>" +
+            "<tr><th>Container</th><td class=\"num\">" + esc(container.format_name || "unknown") +
+              " &middot; " + esc(video.codec || "?") + " &middot; " +
+              esc(video.width || "?") + "&times;" + esc(video.height || "?") + " &middot; " +
+              esc(video.fps || "?") + " fps</td></tr>" +
+            "<tr><th>Duration / size</th><td class=\"num\">" +
+              esc(container.duration_s || video.duration_s || "?") + " s &middot; " +
+              bytes(container.size_bytes) + "</td></tr>" +
+            "<tr><th>Findings hash</th><td class=\"hash\">" + esc(f.findings_hash) + "</td></tr>" +
+            "<tr><th>Manifest hash</th><td class=\"hash\">" + esc(f.manifest_hash) + "</td></tr>" +
+          "</tbody></table></div>" +
+        "</div>" +
+      "</div>";
+
+    html += "<h3>Tamper timeline</h3>";
+    html += '<p class="sub">Per-frame anomaly score. Solid bars are frames the model reports as ' +
+      "reliable; faded bars are frames where it does not trust its own reading.</p>";
+    html += renderTimeline(f.localisation && f.localisation.timeline);
+    html += renderStreams(f);
+    html += renderFragility(fragility);
+    html += renderLedger(f.ledger);
+
+    if (f.sampling) {
+      html += '<p class="note">Sampling: ' + esc(f.sampling.examination_frames) +
+        " frames for the reported examination, " + esc(f.sampling.fragility_probe_frames) +
+        " frames per fragility probe. The fragility search asks only whether the outcome flips, " +
+        "and baseline and probes use the same budget so the comparison is like for like.</p>";
+    }
+
+    $("snap-body").innerHTML = html;
+  }
+
+  fetch("demo/findings.json")
+    .then(function (res) {
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      return res.json();
+    })
+    .then(render)
+    .catch(function (err) {
+      $("snap-body").innerHTML =
+        '<p class="loading">Could not load the examination record (' + esc(err.message) +
+        "). If you are viewing this file directly from disk, serve the folder over HTTP instead " +
+        "&mdash; browsers block local fetches from file:// URLs.</p>";
+    });
+})();
+</script>
+</body>
+</html>

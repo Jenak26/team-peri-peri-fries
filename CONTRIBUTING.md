@@ -8,7 +8,7 @@ what it is rather than from taste, so they are worth reading before you open a P
 Every change must pass all three locally before it will pass CI:
 
 ```bash
-python -m pytest -q                 # 80 tests, no GPU required
+python -m pytest -q                 # 88 tests, no GPU required
 python -m tools.selftest_lr         # 3 likelihood-ratio acceptance assertions
 python -m ruff check .
 ```

@@ -1,0 +1,1162 @@
+{
+  "calibration": {
+    "available": true
+  },
+  "decision": {
+    "dependence_shrinkage": 0.5,
+    "log10lr_total": 0.0,
+    "outcome": "INCONCLUSIVE",
+    "primary_reason": "no-usable-stream",
+    "propositions": {
+      "Hd": "the exhibit is synthetically generated or materially manipulated in the facial region",
+      "Hp": "the exhibit is an unmanipulated recording of a real event"
+    },
+    "reason_codes": [
+      "no-usable-stream",
+      "out-of-validated-domain"
+    ],
+    "sentence": "The findings provide no support for either proposition over the other; they distinguish neither proposition at the reporting threshold.",
+    "streams": [
+      {
+        "baseline_log10lr": 0.550274,
+        "exclusion_reason": "out-of-validated-domain",
+        "in_domain": false,
+        "iqr": 0.0,
+        "mahalanobis": 86.607553,
+        "mahalanobis_threshold": 17.959134,
+        "median_log10lr": 0.550274,
+        "name": "acquisition",
+        "stress_log10lrs": [
+          0.550274
+        ],
+        "usable": false,
+        "weight": 1.0
+      },
+      {
+        "baseline_log10lr": 0.822502,
+        "exclusion_reason": "out-of-validated-domain",
+        "in_domain": false,
+        "iqr": 0.0,
+        "mahalanobis": 10.648873,
+        "mahalanobis_threshold": 13.244379,
+        "median_log10lr": 0.822502,
+        "name": "temporal",
+        "stress_log10lrs": [
+          0.822502
+        ],
+        "usable": false,
+        "weight": 1.0
+      }
+    ],
+    "usable_stream_names": [],
+    "verbal": "no support"
+  },
+  "evidence_id": "EVD_20260820T184337Z_841ffbf3",
+  "examiner": "verification-run",
+  "exhibit": {
+    "container": {
+      "audio": null,
+      "bit_rate": 278220,
+      "duration_s": 4.0,
+      "format_long_name": "QuickTime / MOV",
+      "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+      "size_bytes": 139110,
+      "stream_count": 1,
+      "tags": {
+        "compatible_brands": "isomiso2avc1mp41",
+        "major_brand": "isom",
+        "minor_version": "512"
+      },
+      "video": {
+        "codec": "h264",
+        "fps": 25.0,
+        "height": 240,
+        "nb_frames": 100,
+        "pix_fmt": "yuv420p",
+        "profile": "High",
+        "width": 320
+      }
+    },
+    "evidence_id": "EVD_20260820T184337Z_841ffbf3",
+    "original_filename": "demo.mp4",
+    "original_read_only": true,
+    "original_sha256": "841ffbf369d18194ab3ce1b6e47c5d23628251b2266cf4b524e49c4a9a32ac58",
+    "size_bytes": 139110,
+    "working_copy_method": "byte-identical-copy",
+    "working_sha256": "841ffbf369d18194ab3ce1b6e47c5d23628251b2266cf4b524e49c4a9a32ac58"
+  },
+  "findings_hash": "350265b627e95a6042540965e3c79f0820923f808ad5c5ac8925c72721fb5d01",
+  "fragility": {
+    "axes": {
+      "jpeg_quality": {
+        "axis": "jpeg_quality",
+        "evaluated_levels": [
+          {
+            "level": 50,
+            "outcome": "INCONCLUSIVE"
+          },
+          {
+            "level": 30,
+            "outcome": "INCONCLUSIVE"
+          },
+          {
+            "level": 10,
+            "outcome": "INCONCLUSIVE"
+          },
+          {
+            "level": 5,
+            "outcome": "INCONCLUSIVE"
+          }
+        ],
+        "flips_at": null,
+        "label_flips": null,
+        "label_survives": "JPEG q5",
+        "n_evaluations": 4,
+        "survives_to": 5
+      },
+      "reencode_crf": {
+        "axis": "reencode_crf",
+        "evaluated_levels": [
+          {
+            "level": 32,
+            "outcome": "INCONCLUSIVE"
+          },
+          {
+            "level": 40,
+            "outcome": "INCONCLUSIVE"
+          },
+          {
+            "level": 48,
+            "outcome": "INCONCLUSIVE"
+          },
+          {
+            "level": 51,
+            "outcome": "INCONCLUSIVE"
+          }
+        ],
+        "flips_at": null,
+        "label_flips": null,
+        "label_survives": "CRF 51",
+        "n_evaluations": 4,
+        "survives_to": 51
+      },
+      "rescale": {
+        "axis": "rescale",
+        "evaluated_levels": [
+          {
+            "level": 0.5,
+            "outcome": "INCONCLUSIVE"
+          },
+          {
+            "level": 0.25,
+            "outcome": "INCONCLUSIVE"
+          },
+          {
+            "level": 0.15,
+            "outcome": "INCONCLUSIVE"
+          },
+          {
+            "level": 0.1,
+            "outcome": "INCONCLUSIVE"
+          }
+        ],
+        "flips_at": null,
+        "label_flips": null,
+        "label_survives": "10% rescale",
+        "n_evaluations": 4,
+        "survives_to": 0.1
+      }
+    },
+    "band": "LOW",
+    "statement": "Conclusion survives to CRF 51 / 10% rescale / JPEG q5. Flips at no tested rung. FRAGILITY: LOW."
+  },
+  "generated_ist": "2026-08-21T00:19:31+05:30",
+  "generated_utc": "2026-08-20T18:49:31Z",
+  "ledger": [
+    {
+      "event": "INTAKE_RECEIVED",
+      "hash": "b2bd0fd5238b2c35c41aa621d21088a62ab9a250b98e859dfb224663cb03e5e7",
+      "seq": 0,
+      "utc": "2026-08-20T18:43:37Z"
+    },
+    {
+      "event": "ORIGINAL_HASHED",
+      "hash": "25f5d6362d0f629024ab1924922f1844505118df949547ce0095332cc46a40ff",
+      "seq": 1,
+      "utc": "2026-08-20T18:43:37Z"
+    },
+    {
+      "event": "QUARANTINE_SEALED",
+      "hash": "e97fc0cf5a77afe2bec12ea4ed06f66954fc44c7eb8ffa70a3eaa91fc3ddbb79",
+      "seq": 2,
+      "utc": "2026-08-20T18:43:37Z"
+    },
+    {
+      "event": "CONTAINER_PROBED",
+      "hash": "982001597cafa4565634bf4c114e61b0cb06c4dfbb7013d1cf0d3efb1d5f4f58",
+      "seq": 3,
+      "utc": "2026-08-20T18:43:37Z"
+    },
+    {
+      "event": "WORKING_COPY_CREATED",
+      "hash": "7c825ce3974c7d2ef16b91100754da49731e6862889bd77b9731dd4736bd68ae",
+      "seq": 4,
+      "utc": "2026-08-20T18:43:37Z"
+    },
+    {
+      "event": "WORKING_COPY_HASHED",
+      "hash": "a0fec9f0e4cb76dd2d74b27ddbc893d4c3f0ba28e52fa5d5c4034487999a0caa",
+      "seq": 5,
+      "utc": "2026-08-20T18:43:37Z"
+    },
+    {
+      "event": "MANIFEST_BUILT",
+      "hash": "bc3028fd097c1b6aba73010879764a4b234b9cc8e83689c84b9bc9cf2434b8f5",
+      "seq": 6,
+      "utc": "2026-08-20T18:43:38Z"
+    },
+    {
+      "event": "STREAM_SCORED",
+      "hash": "677f734807f0528ee69c59fd27ddc226650ccf3a86bf2079dc129c1448dd7df0",
+      "seq": 7,
+      "utc": "2026-08-20T18:43:38Z"
+    },
+    {
+      "event": "STREAM_SCORED",
+      "hash": "debc0afcd2726359050af1157252fc5908f6d2d606e49789d86cabb81f4c1545",
+      "seq": 8,
+      "utc": "2026-08-20T18:45:38Z"
+    },
+    {
+      "event": "STREAM_SCORED",
+      "hash": "3a3f867e4bf3bae0350d801d0a0793a97372977aa88415d4d98a00499566fd5a",
+      "seq": 9,
+      "utc": "2026-08-20T18:45:38Z"
+    },
+    {
+      "event": "DECISION_MADE",
+      "hash": "8d81653224cd2d010e63e5b1d5249c34f246f01b46fcc99498dab6056199d623",
+      "seq": 10,
+      "utc": "2026-08-20T18:49:31Z"
+    },
+    {
+      "event": "LOCALISED",
+      "hash": "473a9c57411609adae8ac294b4d0a069aed84a67c6a4c961a681ba2b73029773",
+      "seq": 11,
+      "utc": "2026-08-20T18:49:31Z"
+    },
+    {
+      "event": "FINDINGS_SEALED",
+      "hash": "086ccd25424d4260e53bce045d0fa70793374680ca277a15b50b9a568ae44565",
+      "seq": 12,
+      "utc": "2026-08-20T18:49:31Z"
+    },
+    {
+      "event": "REPORT_GENERATED",
+      "hash": "eca80e0153af8de2eb38d014797ef6d57b663960c582ed39095529f1a06fd744",
+      "seq": 13,
+      "utc": "2026-08-20T18:49:31Z"
+    },
+    {
+      "event": "REPLAY_VERIFIED",
+      "hash": "bb00c94c913c6a5c51bd0742c4435e0ce61e1fe719fff3d8d9fe91b064d83201",
+      "seq": 14,
+      "utc": "2026-08-20T18:54:52Z"
+    }
+  ],
+  "localisation": {
+    "overlay_files": [
+      "frame_0008.png",
+      "overlay_0008.png",
+      "frame_0013.png",
+      "overlay_0013.png",
+      "frame_0057.png",
+      "overlay_0057.png",
+      "frame_0012.png",
+      "overlay_0012.png",
+      "frame_0014.png",
+      "overlay_0014.png"
+    ],
+    "timeline": [
+      {
+        "confident": true,
+        "index": 0,
+        "reliability": 0.989272,
+        "score": 0.999119,
+        "timestamp_s": 0.0
+      },
+      {
+        "confident": true,
+        "index": 1,
+        "reliability": 0.994001,
+        "score": 0.99912,
+        "timestamp_s": 0.04
+      },
+      {
+        "confident": true,
+        "index": 2,
+        "reliability": 0.996195,
+        "score": 0.999125,
+        "timestamp_s": 0.08
+      },
+      {
+        "confident": true,
+        "index": 3,
+        "reliability": 0.996238,
+        "score": 0.999139,
+        "timestamp_s": 0.12
+      },
+      {
+        "confident": true,
+        "index": 4,
+        "reliability": 0.993316,
+        "score": 0.999158,
+        "timestamp_s": 0.16
+      },
+      {
+        "confident": true,
+        "index": 5,
+        "reliability": 0.992442,
+        "score": 0.999128,
+        "timestamp_s": 0.2
+      },
+      {
+        "confident": true,
+        "index": 6,
+        "reliability": 0.984814,
+        "score": 0.999132,
+        "timestamp_s": 0.24
+      },
+      {
+        "confident": true,
+        "index": 7,
+        "reliability": 0.978641,
+        "score": 0.999172,
+        "timestamp_s": 0.28
+      },
+      {
+        "confident": true,
+        "index": 8,
+        "reliability": 0.980807,
+        "score": 0.999211,
+        "timestamp_s": 0.32
+      },
+      {
+        "confident": true,
+        "index": 9,
+        "reliability": 0.987001,
+        "score": 0.999142,
+        "timestamp_s": 0.36
+      },
+      {
+        "confident": true,
+        "index": 10,
+        "reliability": 0.991126,
+        "score": 0.998884,
+        "timestamp_s": 0.4
+      },
+      {
+        "confident": true,
+        "index": 11,
+        "reliability": 0.990585,
+        "score": 0.999195,
+        "timestamp_s": 0.44
+      },
+      {
+        "confident": true,
+        "index": 12,
+        "reliability": 0.98819,
+        "score": 0.999199,
+        "timestamp_s": 0.48
+      },
+      {
+        "confident": true,
+        "index": 13,
+        "reliability": 0.98985,
+        "score": 0.999207,
+        "timestamp_s": 0.52
+      },
+      {
+        "confident": true,
+        "index": 14,
+        "reliability": 0.99031,
+        "score": 0.999198,
+        "timestamp_s": 0.56
+      },
+      {
+        "confident": true,
+        "index": 15,
+        "reliability": 0.98798,
+        "score": 0.999162,
+        "timestamp_s": 0.6
+      },
+      {
+        "confident": true,
+        "index": 16,
+        "reliability": 0.98631,
+        "score": 0.999169,
+        "timestamp_s": 0.64
+      },
+      {
+        "confident": true,
+        "index": 17,
+        "reliability": 0.986282,
+        "score": 0.999143,
+        "timestamp_s": 0.68
+      },
+      {
+        "confident": true,
+        "index": 18,
+        "reliability": 0.993707,
+        "score": 0.999107,
+        "timestamp_s": 0.72
+      },
+      {
+        "confident": true,
+        "index": 19,
+        "reliability": 0.995186,
+        "score": 0.999093,
+        "timestamp_s": 0.76
+      },
+      {
+        "confident": true,
+        "index": 20,
+        "reliability": 0.992779,
+        "score": 0.999138,
+        "timestamp_s": 0.8
+      },
+      {
+        "confident": true,
+        "index": 21,
+        "reliability": 0.998609,
+        "score": 0.996305,
+        "timestamp_s": 0.84
+      },
+      {
+        "confident": true,
+        "index": 22,
+        "reliability": 0.99921,
+        "score": 0.991241,
+        "timestamp_s": 0.88
+      },
+      {
+        "confident": true,
+        "index": 23,
+        "reliability": 0.997904,
+        "score": 0.996719,
+        "timestamp_s": 0.92
+      },
+      {
+        "confident": true,
+        "index": 24,
+        "reliability": 0.998018,
+        "score": 0.996667,
+        "timestamp_s": 0.96
+      },
+      {
+        "confident": true,
+        "index": 25,
+        "reliability": 0.996672,
+        "score": 0.998481,
+        "timestamp_s": 1.0
+      },
+      {
+        "confident": true,
+        "index": 26,
+        "reliability": 0.997645,
+        "score": 0.997888,
+        "timestamp_s": 1.04
+      },
+      {
+        "confident": true,
+        "index": 27,
+        "reliability": 0.997225,
+        "score": 0.998797,
+        "timestamp_s": 1.08
+      },
+      {
+        "confident": true,
+        "index": 28,
+        "reliability": 0.996075,
+        "score": 0.999072,
+        "timestamp_s": 1.12
+      },
+      {
+        "confident": true,
+        "index": 29,
+        "reliability": 0.994838,
+        "score": 0.9991,
+        "timestamp_s": 1.16
+      },
+      {
+        "confident": true,
+        "index": 30,
+        "reliability": 0.99361,
+        "score": 0.99912,
+        "timestamp_s": 1.2
+      },
+      {
+        "confident": true,
+        "index": 31,
+        "reliability": 0.996499,
+        "score": 0.999076,
+        "timestamp_s": 1.24
+      },
+      {
+        "confident": true,
+        "index": 32,
+        "reliability": 0.995333,
+        "score": 0.999148,
+        "timestamp_s": 1.28
+      },
+      {
+        "confident": true,
+        "index": 33,
+        "reliability": 0.994889,
+        "score": 0.999127,
+        "timestamp_s": 1.32
+      },
+      {
+        "confident": true,
+        "index": 34,
+        "reliability": 0.997399,
+        "score": 0.998414,
+        "timestamp_s": 1.36
+      },
+      {
+        "confident": true,
+        "index": 35,
+        "reliability": 0.998186,
+        "score": 0.998163,
+        "timestamp_s": 1.4
+      },
+      {
+        "confident": true,
+        "index": 36,
+        "reliability": 0.998412,
+        "score": 0.997087,
+        "timestamp_s": 1.44
+      },
+      {
+        "confident": true,
+        "index": 37,
+        "reliability": 0.999359,
+        "score": 0.991452,
+        "timestamp_s": 1.48
+      },
+      {
+        "confident": true,
+        "index": 38,
+        "reliability": 0.999448,
+        "score": 0.991723,
+        "timestamp_s": 1.52
+      },
+      {
+        "confident": true,
+        "index": 39,
+        "reliability": 0.998485,
+        "score": 0.996184,
+        "timestamp_s": 1.56
+      },
+      {
+        "confident": true,
+        "index": 40,
+        "reliability": 0.998794,
+        "score": 0.99162,
+        "timestamp_s": 1.6
+      },
+      {
+        "confident": true,
+        "index": 41,
+        "reliability": 0.99901,
+        "score": 0.992519,
+        "timestamp_s": 1.64
+      },
+      {
+        "confident": true,
+        "index": 42,
+        "reliability": 0.99964,
+        "score": 0.990973,
+        "timestamp_s": 1.68
+      },
+      {
+        "confident": true,
+        "index": 43,
+        "reliability": 0.999538,
+        "score": 0.991497,
+        "timestamp_s": 1.72
+      },
+      {
+        "confident": true,
+        "index": 44,
+        "reliability": 0.996558,
+        "score": 0.998809,
+        "timestamp_s": 1.76
+      },
+      {
+        "confident": true,
+        "index": 45,
+        "reliability": 0.998621,
+        "score": 0.997677,
+        "timestamp_s": 1.8
+      },
+      {
+        "confident": true,
+        "index": 46,
+        "reliability": 0.999434,
+        "score": 0.99132,
+        "timestamp_s": 1.84
+      },
+      {
+        "confident": true,
+        "index": 47,
+        "reliability": 0.99648,
+        "score": 0.998227,
+        "timestamp_s": 1.88
+      },
+      {
+        "confident": true,
+        "index": 48,
+        "reliability": 0.989766,
+        "score": 0.999198,
+        "timestamp_s": 1.92
+      },
+      {
+        "confident": true,
+        "index": 49,
+        "reliability": 0.997268,
+        "score": 0.998394,
+        "timestamp_s": 1.96
+      },
+      {
+        "confident": true,
+        "index": 50,
+        "reliability": 0.999159,
+        "score": 0.997885,
+        "timestamp_s": 2.0
+      },
+      {
+        "confident": true,
+        "index": 51,
+        "reliability": 0.996309,
+        "score": 0.999135,
+        "timestamp_s": 2.04
+      },
+      {
+        "confident": true,
+        "index": 52,
+        "reliability": 0.991626,
+        "score": 0.999186,
+        "timestamp_s": 2.08
+      },
+      {
+        "confident": true,
+        "index": 53,
+        "reliability": 0.993555,
+        "score": 0.999143,
+        "timestamp_s": 2.12
+      },
+      {
+        "confident": true,
+        "index": 54,
+        "reliability": 0.992719,
+        "score": 0.99916,
+        "timestamp_s": 2.16
+      },
+      {
+        "confident": true,
+        "index": 55,
+        "reliability": 0.990251,
+        "score": 0.999153,
+        "timestamp_s": 2.2
+      },
+      {
+        "confident": true,
+        "index": 56,
+        "reliability": 0.988205,
+        "score": 0.999163,
+        "timestamp_s": 2.24
+      },
+      {
+        "confident": true,
+        "index": 57,
+        "reliability": 0.989304,
+        "score": 0.999206,
+        "timestamp_s": 2.28
+      },
+      {
+        "confident": true,
+        "index": 58,
+        "reliability": 0.99217,
+        "score": 0.99918,
+        "timestamp_s": 2.32
+      },
+      {
+        "confident": true,
+        "index": 59,
+        "reliability": 0.993248,
+        "score": 0.999061,
+        "timestamp_s": 2.36
+      },
+      {
+        "confident": true,
+        "index": 60,
+        "reliability": 0.991346,
+        "score": 0.999187,
+        "timestamp_s": 2.4
+      },
+      {
+        "confident": true,
+        "index": 61,
+        "reliability": 0.997185,
+        "score": 0.999149,
+        "timestamp_s": 2.44
+      },
+      {
+        "confident": true,
+        "index": 62,
+        "reliability": 0.999173,
+        "score": 0.995561,
+        "timestamp_s": 2.48
+      },
+      {
+        "confident": true,
+        "index": 63,
+        "reliability": 0.990089,
+        "score": 0.999155,
+        "timestamp_s": 2.52
+      }
+    ],
+    "top_suspect_frames": [
+      {
+        "confident": true,
+        "index": 8,
+        "reliability": 0.980807,
+        "score": 0.999211,
+        "timestamp_s": 0.32
+      },
+      {
+        "confident": true,
+        "index": 13,
+        "reliability": 0.98985,
+        "score": 0.999207,
+        "timestamp_s": 0.52
+      },
+      {
+        "confident": true,
+        "index": 57,
+        "reliability": 0.989304,
+        "score": 0.999206,
+        "timestamp_s": 2.28
+      },
+      {
+        "confident": true,
+        "index": 12,
+        "reliability": 0.98819,
+        "score": 0.999199,
+        "timestamp_s": 0.48
+      },
+      {
+        "confident": true,
+        "index": 14,
+        "reliability": 0.99031,
+        "score": 0.999198,
+        "timestamp_s": 0.56
+      }
+    ]
+  },
+  "manifest_hash": "866f8c4aa7e6e28c9ea91b5cdd0477e23cadf57cc3a595db3cc669dec461b4a4",
+  "models": {
+    "decoder": {
+      "checkpoint_loaded": true,
+      "config": {
+        "arch": "SegformerDecoder",
+        "backbone": "nvidia/mit-b2",
+        "crop_size": 512,
+        "in_channels": 6,
+        "out_channels": 2,
+        "requested_arch": "segformer"
+      },
+      "meta": {
+        "corpus_id": "PPF-ICV-1",
+        "extra": {
+          "best_val_iou": 0.9646089790446253,
+          "device": "cuda",
+          "epochs": 24,
+          "fingerprint_source": "learned-videoprint",
+          "finished_utc": "2026-08-20T15:12:09Z",
+          "held_out_method": "poisson",
+          "n_parameters": 27357570,
+          "val_auroc": 1.0,
+          "val_auroc_held_out_method": null,
+          "val_ece": 0.009824759951308257
+        },
+        "held_out_method": "poisson",
+        "seed": 20260820,
+        "stage": "B"
+      },
+      "mode": "learned-decoder"
+    },
+    "modes": {
+      "acquisition": "learned-videoprint",
+      "decoder": "learned-decoder",
+      "temporal": "learned-temporal"
+    },
+    "temporal": {
+      "checkpoint_loaded": true,
+      "config": {
+        "d_model": 256,
+        "max_frames": 256,
+        "n_heads": 8,
+        "n_layers": 4,
+        "token_dim": 8
+      },
+      "meta": {
+        "corpus_id": "PPF-ICV-1",
+        "extra": {
+          "best_val_auroc": 0.9166666666666666,
+          "device": "cuda",
+          "epochs": 60,
+          "finished_utc": "2026-08-20T15:36:00Z",
+          "hybrid_sequences": true,
+          "n_parameters": 3260162
+        },
+        "held_out_method": "poisson",
+        "seed": 20260820,
+        "stage": "C"
+      },
+      "mode": "learned-temporal"
+    },
+    "videoprint": {
+      "checkpoint_loaded": true,
+      "meta": {
+        "corpus_id": "PPF-ICV-1",
+        "extra": {
+          "best_loss": 4.149283655228153,
+          "device": "cuda",
+          "epochs": 30,
+          "finished_utc": "2026-08-20T12:52:48Z",
+          "n_parameters": 1252323,
+          "objective": "NT-Xent over same-clip same-GOP-bucket patches",
+          "trained_on": "authentic video only"
+        },
+        "held_out_method": "poisson",
+        "seed": 20260820,
+        "stage": "A"
+      },
+      "mode": "learned-videoprint",
+      "statement": "Fingerprint produced by the learned acquisition model."
+    }
+  },
+  "propositions": {
+    "Hd": "the exhibit is synthetically generated or materially manipulated in the facial region",
+    "Hp": "the exhibit is an unmanipulated recording of a real event"
+  },
+  "provenance": {
+    "facts": {
+      "c2pa": {
+        "claims": [],
+        "status": "invalid",
+        "validation_errors": [
+          "'io_error'"
+        ]
+      },
+      "container": {
+        "audio": null,
+        "bit_rate": 278220,
+        "duration_s": 4.0,
+        "format_long_name": "QuickTime / MOV",
+        "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+        "size_bytes": 139110,
+        "stream_count": 1,
+        "tags": {
+          "compatible_brands": "isomiso2avc1mp41",
+          "major_brand": "isom",
+          "minor_version": "512"
+        },
+        "video": {
+          "codec": "h264",
+          "fps": 25.0,
+          "height": 240,
+          "nb_frames": 100,
+          "pix_fmt": "yuv420p",
+          "profile": "High",
+          "width": 320
+        }
+      },
+      "now_utc": "2026-08-20T18:43:38.177930+00:00",
+      "path": "evidence\\EVD_20260820T184337Z_841ffbf3\\working.mp4",
+      "size_bytes": 139110,
+      "suffix": ".mp4",
+      "tags": {
+        "compatible_brands": "isomiso2avc1mp41",
+        "major_brand": "isom",
+        "minor_version": "512"
+      },
+      "video": {
+        "codec": "h264",
+        "fps": 25.0,
+        "height": 240,
+        "nb_frames": 100,
+        "pix_fmt": "yuv420p",
+        "profile": "High",
+        "width": 320
+      }
+    },
+    "feature": [
+      0.362745,
+      0.15,
+      0.0,
+      1.0,
+      0.066667,
+      0.078125
+    ],
+    "rules": [
+      {
+        "code": "PRV01",
+        "evaluated": true,
+        "statement": "No C2PA manifest was found; absence is recorded but is not by itself a finding.",
+        "triggered": false,
+        "weight": 1.0
+      },
+      {
+        "code": "PRV02",
+        "evaluated": true,
+        "statement": "A C2PA manifest failed validation; forensic findings are still evaluated independently.",
+        "triggered": true,
+        "weight": 2.0
+      },
+      {
+        "code": "PRV03",
+        "evaluated": true,
+        "statement": "Device make or model tags were not available in the container metadata.",
+        "triggered": true,
+        "weight": 1.0
+      },
+      {
+        "code": "PRV04",
+        "evaluated": true,
+        "statement": "The container reports a software encoder in its metadata.",
+        "triggered": false,
+        "weight": 0.8
+      },
+      {
+        "code": "PRV05",
+        "evaluated": true,
+        "statement": "The reported duration is missing or zero.",
+        "triggered": false,
+        "weight": 1.5
+      },
+      {
+        "code": "PRV06",
+        "evaluated": true,
+        "statement": "The reported video dimensions are missing or zero.",
+        "triggered": false,
+        "weight": 1.5
+      },
+      {
+        "code": "PRV07",
+        "evaluated": true,
+        "statement": "The file extension is outside the expected video set.",
+        "triggered": false,
+        "weight": 0.5
+      },
+      {
+        "code": "PRV08",
+        "evaluated": true,
+        "statement": "Container tags exist but no creation time tag was available.",
+        "triggered": true,
+        "weight": 0.7
+      },
+      {
+        "code": "PRV09",
+        "evaluated": true,
+        "statement": "The exhibit file is too small for the stated video container.",
+        "triggered": false,
+        "weight": 1.0
+      },
+      {
+        "code": "PRV10",
+        "evaluated": true,
+        "statement": "C2PA verifies that provenance claims have not been tampered with, not that they are truthful.",
+        "triggered": false,
+        "weight": 0.2
+      }
+    ],
+    "score": 0.362745,
+    "stress_scores": [
+      0.312745,
+      0.362745,
+      0.412745
+    ]
+  },
+  "sampling": {
+    "examination_frames": 64,
+    "fragility_probe_frames": 12
+  },
+  "schema": "peri.findings/1",
+  "streams": {
+    "acquisition": {
+      "feature": [
+        0.690895,
+        0.036647,
+        0.818231,
+        0.036307,
+        0.993942,
+        0.747419,
+        0.998822,
+        1.378471
+      ],
+      "score": 0.690895
+    },
+    "provenance": {
+      "facts": {
+        "c2pa": {
+          "claims": [],
+          "status": "invalid",
+          "validation_errors": [
+            "'io_error'"
+          ]
+        },
+        "container": {
+          "audio": null,
+          "bit_rate": 278220,
+          "duration_s": 4.0,
+          "format_long_name": "QuickTime / MOV",
+          "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+          "size_bytes": 139110,
+          "stream_count": 1,
+          "tags": {
+            "compatible_brands": "isomiso2avc1mp41",
+            "major_brand": "isom",
+            "minor_version": "512"
+          },
+          "video": {
+            "codec": "h264",
+            "fps": 25.0,
+            "height": 240,
+            "nb_frames": 100,
+            "pix_fmt": "yuv420p",
+            "profile": "High",
+            "width": 320
+          }
+        },
+        "now_utc": "2026-08-20T18:43:38.177930+00:00",
+        "path": "evidence\\EVD_20260820T184337Z_841ffbf3\\working.mp4",
+        "size_bytes": 139110,
+        "suffix": ".mp4",
+        "tags": {
+          "compatible_brands": "isomiso2avc1mp41",
+          "major_brand": "isom",
+          "minor_version": "512"
+        },
+        "video": {
+          "codec": "h264",
+          "fps": 25.0,
+          "height": 240,
+          "nb_frames": 100,
+          "pix_fmt": "yuv420p",
+          "profile": "High",
+          "width": 320
+        }
+      },
+      "feature": [
+        0.362745,
+        0.15,
+        0.0,
+        1.0,
+        0.066667,
+        0.078125
+      ],
+      "rules": [
+        {
+          "code": "PRV01",
+          "evaluated": true,
+          "statement": "No C2PA manifest was found; absence is recorded but is not by itself a finding.",
+          "triggered": false,
+          "weight": 1.0
+        },
+        {
+          "code": "PRV02",
+          "evaluated": true,
+          "statement": "A C2PA manifest failed validation; forensic findings are still evaluated independently.",
+          "triggered": true,
+          "weight": 2.0
+        },
+        {
+          "code": "PRV03",
+          "evaluated": true,
+          "statement": "Device make or model tags were not available in the container metadata.",
+          "triggered": true,
+          "weight": 1.0
+        },
+        {
+          "code": "PRV04",
+          "evaluated": true,
+          "statement": "The container reports a software encoder in its metadata.",
+          "triggered": false,
+          "weight": 0.8
+        },
+        {
+          "code": "PRV05",
+          "evaluated": true,
+          "statement": "The reported duration is missing or zero.",
+          "triggered": false,
+          "weight": 1.5
+        },
+        {
+          "code": "PRV06",
+          "evaluated": true,
+          "statement": "The reported video dimensions are missing or zero.",
+          "triggered": false,
+          "weight": 1.5
+        },
+        {
+          "code": "PRV07",
+          "evaluated": true,
+          "statement": "The file extension is outside the expected video set.",
+          "triggered": false,
+          "weight": 0.5
+        },
+        {
+          "code": "PRV08",
+          "evaluated": true,
+          "statement": "Container tags exist but no creation time tag was available.",
+          "triggered": true,
+          "weight": 0.7
+        },
+        {
+          "code": "PRV09",
+          "evaluated": true,
+          "statement": "The exhibit file is too small for the stated video container.",
+          "triggered": false,
+          "weight": 1.0
+        },
+        {
+          "code": "PRV10",
+          "evaluated": true,
+          "statement": "C2PA verifies that provenance claims have not been tampered with, not that they are truthful.",
+          "triggered": false,
+          "weight": 0.2
+        }
+      ],
+      "score": 0.362745,
+      "stress_scores": [
+        0.312745,
+        0.362745,
+        0.412745
+      ]
+    },
+    "temporal": {
+      "feature": [
+        0.997801,
+        0.00251,
+        0.999211,
+        0.999192,
+        1.0,
+        1.0
+      ],
+      "score": 0.967277
+    }
+  }
+}

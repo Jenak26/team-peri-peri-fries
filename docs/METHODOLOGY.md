@@ -78,6 +78,33 @@ The corpus is built with four splice methods. The `poisson` method is kept out o
 `AUROC[poisson]`. That number is the generalisation claim: how the decoder performs
 on a manipulation family it was never shown.
 
+### What the shipped checkpoints actually report
+
+Stated plainly, because the generalisation claim is the number that matters and it is
+not currently available:
+
+- `stage_b_decoder.pt` records `val_auroc_held_out_method` as **NaN**, and
+  `artifacts/calibration.json` records `metrics.auroc_held_out_method` as **null**.
+  This is by construction, not a training failure: the held-out method never appears
+  in `val`, so AUROC over that split is undefined. The consequence is nonetheless
+  real - **there is no held-out-generator AUROC to quote.** Any number quoted about
+  this build must be described as in-domain.
+- The in-domain figures are `val_auroc` 1.0 and `best_val_iou` 0.965, on a `val` split
+  of 2 authentic and 6 manipulated samples. A perfect AUROC over eight samples is a
+  statement about the sample size, not about the model, and should be presented that
+  way.
+- `artifacts/calibration.json` reports `metrics.ece` of **0.304**. That is poor
+  calibration. A well-calibrated 0.85 beats an overconfident 0.97, and by the same
+  standard this build's confidence is not yet trustworthy.
+- The `cal` split holds 2 authentic and 8 manipulated samples. That is below the
+  fifteen-per-class floor for kernel density estimation, so both streams fall back to
+  the logistic densities, exactly as `core/forensic_lr.py` specifies. The fallback is
+  working as designed; the underlying constraint is that the corpus is small.
+
+Reported honestly, this is a complete and reproducible examination protocol carrying a
+calibration that is not yet strong enough to support confident likelihood ratios. The
+protocol is the contribution; the corpus is the limitation.
+
 ## Determinism
 
 The replay guarantee requires that a second run produces a byte-identical findings

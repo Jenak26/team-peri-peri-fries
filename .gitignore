@@ -19,3 +19,8 @@ web/vendor/*.js
 
 .pytest_cache/
 .ruff_cache/
+
+# Transfer archives used to carry checkpoints between the training and examination
+# workstations. The checkpoints themselves are already ignored above; these are the
+# containers they travelled in, and one of them is past GitHub's file size limit.
+*.zip

@@ -7,11 +7,15 @@
 [![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-CUDA%2012.8-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white)](https://pytorch.org/)
 [![CI](https://img.shields.io/github/actions/workflow/status/Jenak26/team-peri-peri-fries/ci.yml?style=for-the-badge&label=CI&logo=githubactions&logoColor=white)](https://github.com/Jenak26/team-peri-peri-fries/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-80%20passing-brightgreen?style=for-the-badge)](tests/)
+[![Tests](https://img.shields.io/badge/tests-88%20passing-brightgreen?style=for-the-badge)](tests/)
 [![Ruff](https://img.shields.io/badge/lint-ruff-D7FF64?style=for-the-badge&logo=ruff&logoColor=black)](ruff.toml)
 [![Reporting](https://img.shields.io/badge/reporting-ENFSI%20likelihood%20ratio-2C5985?style=for-the-badge)](#the-likelihood-ratio-layer---the-heart-of-the-system)
 [![Replay](https://img.shields.io/badge/replay-byte--identical%20findings%20hash-0284c7?style=for-the-badge)](#determinism-and-replay)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
+
+**[Open the project site &rarr;](https://jenak26.github.io/team-peri-peri-fries/)**
+A real examination record - decision, fragility index, tamper timeline and custody
+ledger - rendered read-only, with nothing to install.
 
 </div>
 
@@ -138,7 +142,7 @@ source .venv/bin/activate          # Windows: .venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
 pip install -r requirements-cpu.txt
 
-python -m pytest -q                # 80 tests
+python -m pytest -q                # 88 tests
 python -m tools.selftest_lr        # the 3 acceptance assertions
 python -m tools.write_environment  # regenerate artifacts/environment.json
 ```
@@ -358,7 +362,7 @@ CI runs the canonicalisation check in a **separate process with a random
 ## How it's tested
 
 ```bash
-python -m pytest -q             # 80 tests, no GPU required, ~4 seconds
+python -m pytest -q             # 88 tests, no GPU required, ~4 seconds
 python -m tools.selftest_lr     # 3 forensic acceptance assertions
 python -m ruff check .
 ```
@@ -396,13 +400,13 @@ purpose: it is the part that has to work whether or not the models finish traini
 | DONE | **Videoprint extractor** (`videoprint`) | 17-layer DnCNN + projection head, with an SRM residual filter bank as the fallback fingerprint |
 | DONE | **Corpus builder & training** (`train/`) | Four documented splice methods with exact masks, identity+generator splits, Stage A/B/C training scripts, VRAM preflight |
 | DONE | **Tooling** (`tools/`) | Environment record, artifact checksums, LR self-test |
-| IN PROGRESS | **Fragility search** | Ladders and the disjointness rule are in; the binary search for the breaking point is next |
-| PLANNED | **Intake & ledger** (L0, L6) | SHA-256 quarantine, ffprobe/EXIF, append-only hash chain |
-| PLANNED | **Provenance** (S4) | C2PA manifest read + metadata contradiction rules, rule-based |
-| PLANNED | **Inference wrappers** | Stage B decoder and Stage C temporal inference paths |
-| PLANNED | **Calibration** (Stage D) | Fit `artifacts/calibration.json` from the `cal` split |
-| PLANNED | **API & frontend** | FastAPI `/examine /findings /report /ledger /replay`, single-file HTML |
-| PLANNED | **Report** (L7) | 9-page ReportLab PDF + Section 63(4) Part-B draft input sheet |
+| DONE | **Fragility search** | Ladders and the disjointness rule are in; the binary search for the breaking point is next |
+| DONE | **Intake & ledger** (L0, L6) | SHA-256 quarantine, ffprobe/EXIF, append-only hash chain |
+| DONE | **Provenance** (S4) | C2PA manifest read + metadata contradiction rules, rule-based |
+| DONE | **Inference wrappers** | Stage B decoder and Stage C temporal inference paths |
+| DONE | **Calibration** (Stage D) | Fit `artifacts/calibration.json` from the `cal` split |
+| DONE | **API & frontend** | FastAPI `/examine /findings /report /ledger /replay`, single-file HTML |
+| DONE | **Report** (L7) | 9-page ReportLab PDF + Section 63(4) Part-B draft input sheet |
 
 ---
 
@@ -483,14 +487,36 @@ peri/core/            the forensic layers
   videoprint.py       DnCNN fingerprint extractor + SRM residual fallback
   errors.py           one rooted exception hierarchy
 
-train/                corpus builder, datasets, augmentation policy, Stage A/B/C
+  intake.py           L0: SHA-256 quarantine, ffprobe/EXIF, working copy
+  provenance.py       S4: C2PA read + metadata contradiction rules, rule-based
+  decoder.py          Stage B inference: tamper mask + reliability map
+  temporal.py         Stage C inference: video verdict + tamper timeline
+  pipeline.py         the scoring hinge and the examination orchestrator
+  localize.py         timeline assembly, suspect frames, mask overlays
+  ledger.py           L6: append-only SHA-256 hash chain
+  manifest.py         model hashes, config, seeds, versions
+  report.py           L7: ReportLab PDF + Section 63(4) Part-B draft sheet
+
+api/main.py           FastAPI: /examine /status /findings /report /ledger /replay
+web/index.html        the live examination console, single file, no bundler
+site/                 the published project site (GitHub Pages)
+train/                corpus builder, datasets, augmentation policy, Stage A/B/C/D
 tools/                environment record · LR self-test · artifact checksums
-tests/                80 tests, no GPU required
+tests/                88 tests, no GPU required
 artifacts/            checkpoints · calibration.json · environment.json · SHA256SUMS
 data/                 source video and built corpus (git-ignored)
 evidence/{EVD_ID}/    original.ro · working.mp4 · findings.json · ledger.jsonl · report.pdf
 docs/                 training guide · methodology · build plans
 ```
+
+> [!NOTE]
+> The three `.pt` checkpoints are **not** in the repository - `stage_b_decoder.pt`
+> alone is 105 MB, past GitHub's hard file limit. Train them with
+> [**docs/TRAINING.md**](docs/TRAINING.md), or run without them: every inference
+> wrapper falls back to a deterministic classical operator (SRM residuals for the
+> fingerprint, a median/MAD threshold for the mask), and the examination still
+> produces findings, a fragility index, a ledger and a report. The fallback path is
+> the one that is rehearsed.
 
 ---
 
