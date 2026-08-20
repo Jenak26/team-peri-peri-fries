@@ -183,6 +183,17 @@ class MaskDataset(Dataset):
         if not self.items:
             raise CorpusError(f"split {split!r} contains no frames")
 
+        first = read_rgb(self.items[0][0])
+        native = min(first.shape[0], first.shape[1])
+        if native < self.crop_size:
+            print(
+                f"[warn] corpus frames are {first.shape[1]}x{first.shape[0]} but "
+                f"crop_size is {self.crop_size}, so every frame is upscaled. That "
+                f"adds no detail and costs "
+                f"{(self.crop_size / native) ** 2:.0f}x the memory and compute. "
+                f"Pass --crop-size {native} instead."
+            )
+
     def __len__(self) -> int:
         return len(self.items)
 

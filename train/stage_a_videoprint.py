@@ -72,6 +72,86 @@ def nt_xent(
 
 MIN_CLIPS_FOR_CONTRASTIVE = 2
 
+# Fraction of total VRAM we assume is actually available for activations, after
+# weights, optimiser state, the CUDA context and allocator fragmentation.
+USABLE_VRAM_FRACTION = 0.80
+
+
+def activation_bytes_per_sample(width: int, depth: int, patch: int, dtype_bytes: int) -> int:
+    """Rough peak activation footprint for one patch through the DnCNN.
+
+    Each Conv-BN-ReLU block keeps about two full-resolution feature maps alive
+    for the backward pass: the convolution's input, and the batch norm's output
+    (which ReLU then overwrites in place). There is no downsampling anywhere in
+    this network, so every one of those maps is full patch resolution, which is
+    what makes the footprint so large relative to the parameter count.
+    """
+    maps = 2 * (depth - 2) + 2
+    return maps * width * patch * patch * dtype_bytes
+
+
+def estimate_peak_bytes(batch: int, width: int, depth: int, patch: int, bf16: bool) -> int:
+    """Peak activation bytes for one training step.
+
+    Doubled because NT-Xent needs both views forward before either can be freed.
+    """
+    return 2 * batch * activation_bytes_per_sample(width, depth, patch, 2 if bf16 else 4)
+
+
+def largest_batch_that_fits(
+    budget_bytes: int, width: int, depth: int, patch: int, bf16: bool
+) -> int:
+    per_step = estimate_peak_bytes(1, width, depth, patch, bf16)
+    return max(1, int(budget_bytes // max(per_step, 1)))
+
+
+def check_memory_budget(args, device: torch.device) -> None:
+    """Print the memory estimate, and stop before a run that cannot finish.
+
+    Failing here with a number and a suggested batch size is far kinder than the
+    allocator failing several minutes in with a message that does not say what
+    to change.
+    """
+    bf16 = device.type == "cuda"
+    needed = estimate_peak_bytes(
+        args.batch_size, args.width, args.depth, STAGE_A.patch_size, bf16
+    )
+
+    if device.type != "cuda":
+        print(
+            f"activations: ~{needed / 1e9:.1f} GB of system RAM at batch "
+            f"{args.batch_size} (CPU run, float32)"
+        )
+        return
+
+    total = torch.cuda.get_device_properties(device).total_memory
+    budget = int(total * USABLE_VRAM_FRACTION)
+    print(
+        f"VRAM: {total / 1e9:.1f} GB total, assuming {budget / 1e9:.1f} GB usable; "
+        f"activations need ~{needed / 1e9:.1f} GB at batch {args.batch_size}"
+    )
+    if needed <= budget:
+        return
+
+    suggestion = largest_batch_that_fits(
+        budget, args.width, args.depth, STAGE_A.patch_size, bf16
+    )
+    suggestion = max(8, 1 << (suggestion.bit_length() - 1))
+    raise SystemExit(
+        f"\nThis run needs about {needed / 1e9:.1f} GB of activation memory but "
+        f"only about {budget / 1e9:.1f} GB is usable on this GPU, so it would "
+        f"fail partway through.\n\n"
+        f"Re-run with a smaller batch:\n\n"
+        f"    python -m train.stage_a_videoprint --epochs {args.epochs} "
+        f"--batch-size {suggestion}\n\n"
+        f"CLAUDE.md section 4 specifies batch 256 against 12-16 GB of VRAM. A "
+        f"smaller batch costs little here: NT-Xent draws its negatives from the "
+        f"other clips in the batch, and this corpus has few enough source clips "
+        f"that a larger batch mostly adds same-clip pairs, which are masked out "
+        f"of the negative set anyway.\n"
+        f"Pass --allow-oversized-batch to override this check."
+    )
+
 
 def build_loader(args, split: str, length: int) -> tuple[DataLoader, int]:
     """Return the loader and the number of distinct clips behind it."""
@@ -107,6 +187,11 @@ def main() -> int:
     parser.add_argument("--depth", type=int, default=STAGE_A.depth)
     parser.add_argument("--temperature", type=float, default=STAGE_A.temperature)
     parser.add_argument("--workers", type=int, default=4)
+    parser.add_argument(
+        "--allow-oversized-batch",
+        action="store_true",
+        help="skip the VRAM check and let the allocator decide",
+    )
     parser.add_argument("--seed", type=int, default=PERI_SEED)
     parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     args = parser.parse_args()
@@ -114,6 +199,9 @@ def main() -> int:
     seed_everything(args.seed)
     device = torch.device(args.device)
     autocast_enabled = device.type == "cuda"
+
+    if not args.allow_oversized_batch:
+        check_memory_budget(args, device)
 
     train_loader, n_train_clips = build_loader(args, "train", args.pairs)
     if n_train_clips < MIN_CLIPS_FOR_CONTRASTIVE:

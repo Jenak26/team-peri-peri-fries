@@ -190,36 +190,55 @@ If both ran, you are ready for the real thing.
 
 ## Step 8: Train Stage A
 
-```bash
-python -m train.stage_a_videoprint --epochs 30 --batch-size 256
+**Pick the command that matches your GPU.** The batch size is set by how much VRAM
+you have, and getting it wrong is the most common way this fails.
+
+| Your VRAM | Command |
+|---|---|
+| **8 GB** | `python -m train.stage_a_videoprint --epochs 30 --batch-size 64` |
+| **12 GB** | `python -m train.stage_a_videoprint --epochs 30 --batch-size 128` |
+| **16 GB or more** | `python -m train.stage_a_videoprint --epochs 30 --batch-size 256` |
+
+Not sure? The command checks for you. It prints a line like:
+
+```
+VRAM: 8.6 GB total, assuming 6.9 GB usable; activations need ~3.2 GB at batch 64
 ```
 
-It prints one line per epoch, 30 in total, and saves to `artifacts/` whenever the
-loss improves. **Leave it alone for 6 to 8 hours.**
+and refuses to start if the numbers do not work, telling you which batch size to use
+instead. It will not let you begin a run that cannot finish.
+
+It then prints one line per epoch, 30 in total, and saves to `artifacts/` whenever
+the loss improves. **Leave it alone for 6 to 8 hours.**
 
 The `train` number should generally drift downwards. It will not fall smoothly, and
 that is normal for this kind of training.
 
-**If you get an "out of memory" error**, run it again with a smaller batch:
-
-```bash
-python -m train.stage_a_videoprint --epochs 30 --batch-size 128
-```
+> **Does a smaller batch make the model worse?** Barely, with this corpus. Stage A
+> learns by comparing patches against patches from *other source clips* in the same
+> batch. This corpus has 9 source clips in the training split, so once the batch is
+> comfortably larger than that, adding more mostly adds patches from clips already
+> represented, which get excluded from the comparison anyway. Batch 256 is specified
+> for a corpus of roughly 2000 clips.
 
 ## Step 9: Train Stage B
 
-```bash
-python -m train.stage_b_decoder --epochs 24 --batch-size 12
-```
+**Always pass `--crop-size 256` with this corpus.** The frames in it are 256x256.
+The default of 512 upscales every frame, which adds no detail at all but costs four
+times the memory and four times the time. The command warns you if you forget.
+
+| Your VRAM | Command |
+|---|---|
+| **8 GB** | `python -m train.stage_b_decoder --epochs 24 --batch-size 6 --crop-size 256` |
+| **12 GB or more** | `python -m train.stage_b_decoder --epochs 24 --batch-size 12 --crop-size 256` |
 
 Takes 3 to 4 hours. Each line shows `IoU` (how well it finds the tampered pixels,
 higher is better) and `ECE` (how honest its confidence is, **lower** is better).
 
-**If you get an "out of memory" error**, try in this order:
+**If you still get an "out of memory" error**, halve the batch again:
 
 ```bash
-python -m train.stage_b_decoder --epochs 24 --batch-size 6
-python -m train.stage_b_decoder --epochs 24 --batch-size 6 --crop-size 384
+python -m train.stage_b_decoder --epochs 24 --batch-size 3 --crop-size 256
 ```
 
 **If it prints `[warn] SegFormer unavailable`**, it could not download the pretrained
@@ -286,6 +305,9 @@ transfer. Copy it again.
 | `corpus index not found` | The corpus is missing or in the wrong folder | Redo Step 2 |
 | `torch.cuda.is_available()` is `False` | Training would run on the processor | Redo Step 4, update your NVIDIA driver |
 | `CUDA out of memory` | Batch too large for your GPU | Lower `--batch-size`, see Steps 8 and 9 |
+| `This run needs about N GB ... but only about M GB is usable` | The VRAM check stopped a run that could not finish | Use the batch size it suggests |
+| Whole laptop freezes, or Task Manager shows memory exhausted | Too many dataloader workers, each a full process | Add `--workers 2` |
+| `[warn] corpus frames are 256x256 but crop_size is 512` | Stage B is upscaling for nothing | Add `--crop-size 256` |
 | `tokens not found ... run with --cache first` | Stage C run in the wrong order | Run the `--cache` command first |
 | `ModuleNotFoundError` | Environment not active | Run the activate line from Step 3 |
 | `cannot import name 'UTC' from 'datetime'` | Code using a Python 3.11 feature on an older interpreter | Fixed. Run `git pull` and try again |
