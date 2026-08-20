@@ -3,7 +3,7 @@
 # of the same attribute - which made real defects hard to see in a diff. This
 # pins one style so the next diff shows only what actually changed.
 line-length = 100
-target-version = "py311"
+target-version = "py310"  # the floor the training workstation runs; see tests/test_phase0_gate.py
 
 [lint]
 select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF", "PL"]

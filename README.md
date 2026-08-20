@@ -34,7 +34,7 @@ Total: roughly half a day. You can leave it running overnight.
 ## Before you start, you need
 
 1. A laptop with an **NVIDIA GPU** (RTX 5060 or better, 8 GB VRAM minimum)
-2. **Python 3.11 or newer** installed. Check by opening a terminal and typing
+2. **Python 3.10 or newer** installed. Check by opening a terminal and typing
    `python --version`. If that fails, try `python3 --version`
 3. **Git** installed. Check with `git --version`
 4. The **corpus folder** copied from the main laptop. This is the training data.
@@ -288,6 +288,8 @@ transfer. Copy it again.
 | `CUDA out of memory` | Batch too large for your GPU | Lower `--batch-size`, see Steps 8 and 9 |
 | `tokens not found ... run with --cache first` | Stage C run in the wrong order | Run the `--cache` command first |
 | `ModuleNotFoundError` | Environment not active | Run the activate line from Step 3 |
+| `cannot import name 'UTC' from 'datetime'` | Code using a Python 3.11 feature on an older interpreter | Fixed. Run `git pull` and try again |
+| `SKIPPED ... ffprobe not on PATH` | ffprobe is missing | Harmless on this machine. Training does not use it |
 | `[warn] SegFormer unavailable` | No internet for the pretrained model | Harmless, it falls back. Reconnect and rerun if you can |
 | `[warn] ... authentic clips vs batch size` | Not much source video | Harmless, training continues |
 | Training is extremely slow | Almost certainly running on the processor | Stop it, redo Step 5 |

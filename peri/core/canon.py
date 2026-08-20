@@ -12,7 +12,7 @@ import json
 import math
 import os
 import random
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 PERI_SEED: int = 20260820
@@ -91,7 +91,7 @@ def stable_seed(*parts: Any, base: int = PERI_SEED) -> int:
 
 def utc_now_iso() -> str:
     return (
-        datetime.now(UTC)
+        datetime.now(timezone.utc)
         .replace(microsecond=0)
         .isoformat()
         .replace("+00:00", "Z")
