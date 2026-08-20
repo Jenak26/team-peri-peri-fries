@@ -1,0 +1,14 @@
+# Normalise to LF in the repository and on checkout.
+# This project's replay guarantee is a byte-identical findings hash, so a
+# CRLF/LF split between the examination workstation and the training
+# workstation is a real hazard, not a cosmetic one.
+* text=auto eol=lf
+
+# Binary artefacts must never be touched.
+*.pt      binary
+*.onnx    binary
+*.pdf     binary
+*.png     binary
+*.jpg     binary
+*.mp4     binary
+*.mov     binary

@@ -1,0 +1,70 @@
+cff-version: 1.2.0
+title: >-
+  Team Peri Peri Fries: a judicial digital evidence
+  authentication engine
+message: >-
+  If you use this software or its methodology, please cite it
+  using the metadata in this file.
+type: software
+authors:
+  - given-names: Janak
+    family-names: Kabra
+    affiliation: Vellore Institute of Technology, Vellore
+repository-code: 'https://github.com/Jenak26/team-peri-peri-fries'
+abstract: >-
+  A forensic examination protocol engine for digital video
+  exhibits. Rather than emitting a probability of forgery, it
+  reports a base-10 likelihood ratio between two explicitly
+  stated propositions, declares the validated domain it was
+  calibrated on via a Mahalanobis in-domain gate, measures an
+  Evidence Fragility Index by adversarially searching for the
+  minimum laundering strength at which its own verdict flips,
+  abstains with machine-generated reason codes when the
+  evidence is too weak or too fragile to report, and seals the
+  entire examination in a replayable SHA-256 hash chain that
+  reproduces a byte-identical findings hash. Output is
+  structured as decision support for a human expert under
+  Section 63(4) of the Bharatiya Sakshya Adhiniyam, 2023.
+keywords:
+  - digital forensics
+  - media forensics
+  - deepfake detection
+  - likelihood ratio
+  - ENFSI
+  - forensic calibration
+  - tamper localization
+  - chain of custody
+  - reproducibility
+license: MIT
+version: 0.2.0
+date-released: '2026-08-20'
+references:
+  - type: article
+    title: >-
+      Noiseprint: A CNN-Based Camera Model Fingerprint
+    authors:
+      - family-names: Cozzolino
+        given-names: Davide
+      - family-names: Verdoliva
+        given-names: Luisa
+    year: 2019
+    journal: IEEE Transactions on Information Forensics and Security
+  - type: conference-paper
+    title: >-
+      TruFor: Leveraging All-Round Clues for Trustworthy Image
+      Forgery Detection and Localization
+    authors:
+      - family-names: Guillaro
+        given-names: Fabrizio
+      - family-names: Cozzolino
+        given-names: Davide
+      - family-names: Sud
+        given-names: Avinash
+      - family-names: Dufour
+        given-names: Nicholas
+      - family-names: Verdoliva
+        given-names: Luisa
+    year: 2023
+    collection-title: >-
+      Proceedings of the IEEE/CVF Conference on Computer Vision
+      and Pattern Recognition (CVPR)

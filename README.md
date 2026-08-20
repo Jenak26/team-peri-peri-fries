@@ -1,453 +1,513 @@
-# Team Peri Peri Fries v2
+# ⚖️ Team Peri Peri Fries
 
-Judicial digital evidence authentication engine. Not a deepfake detector. It is a
-forensic examination protocol engine: it reports a likelihood ratio between two
-stated propositions, declares the domain it was calibrated on, abstains when the
-evidence is too weak or too fragile, and seals the whole examination in a
-replayable hash chain.
+### A Judicial Digital Evidence Authentication Engine
 
-- **Hp**: the exhibit is an unmanipulated recording of a real event
-- **Hd**: the exhibit is synthetically generated or materially manipulated in the facial region
+<div align="center">
 
-Full design context is in `CLAUDE.md`. This file tells you how to run it.
+[![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-CUDA%2012.8-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white)](https://pytorch.org/)
+[![CI](https://img.shields.io/github/actions/workflow/status/Jenak26/team-peri-peri-fries/ci.yml?style=for-the-badge&label=CI&logo=githubactions&logoColor=white)](https://github.com/Jenak26/team-peri-peri-fries/actions/workflows/ci.yml)
+[![Tests](https://img.shields.io/badge/tests-80%20passing-brightgreen?style=for-the-badge)](tests/)
+[![Ruff](https://img.shields.io/badge/lint-ruff-D7FF64?style=for-the-badge&logo=ruff&logoColor=black)](ruff.toml)
+[![Reporting](https://img.shields.io/badge/reporting-ENFSI%20likelihood%20ratio-2C5985?style=for-the-badge)](#-the-likelihood-ratio-layer--the-heart-of-the-system)
+[![Replay](https://img.shields.io/badge/replay-byte--identical%20findings%20hash-0284c7?style=for-the-badge)](#-determinism-and-replay)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
 
----
+</div>
 
-# TRAINING LAPTOP GUIDE
+**This is not a deepfake detector. It is a forensic examination protocol engine.**
+It takes one video exhibit and returns a base-10 likelihood ratio between two
+explicitly stated propositions, a declaration of whether the exhibit even falls
+inside the population it was calibrated on, the exact laundering strength at which
+its own conclusion breaks, a mandatory abstention path, and a hash-sealed examination
+record that a second run reproduces byte-for-byte.
 
-**Read this whole section before typing anything.** It goes from a fresh machine to
-finished model files. You do not need to understand the forensics to follow it.
-
-## What you are doing
-
-Three neural networks need training. They must be trained in order, because each one
-uses the output of the one before it.
-
-| Stage | What it learns | How long |
-|---|---|---|
-| **A** Videoprint | What a genuine camera pipeline looks like | 6 to 8 hours |
-| **B** Decoder | Which pixels were tampered with | 3 to 4 hours |
-| **C** Temporal | Which moments in the video were tampered with | about 30 minutes |
-
-Total: roughly half a day. You can leave it running overnight.
-
-## Before you start, you need
-
-1. A laptop with an **NVIDIA GPU** (RTX 5060 or better, 8 GB VRAM minimum)
-2. **Python 3.10 or newer** installed. Check by opening a terminal and typing
-   `python --version`. If that fails, try `python3 --version`
-3. **Git** installed. Check with `git --version`
-4. The **corpus folder** copied from the main laptop. This is the training data.
-   It is about 294 MB and is named `corpus`
-5. Internet, for downloading PyTorch (about 3 GB)
-
-> **About the corpus:** the training data has already been built on the main laptop.
-> You do **not** need any video files, and you do **not** need to build anything.
-> Just copy the folder across. If you were not given a corpus folder, jump to
-> [If you have no corpus folder](#if-you-have-no-corpus-folder) at the end.
+> [!IMPORTANT]
+> **The deliverable is not a better score. It is a verdict a court can actually
+> weigh - including the verdict "I don't know."** Every existing tool outputs
+> `P(fake) = 0.97`. A court cannot do anything with that number: it has no stated
+> propositions, no declared population, no validated domain, no uncertainty, and no
+> way to reproduce it. This system is built backwards from what a cross-examination
+> would destroy.
 
 ---
 
-## Step 1: Download the code
+## 🎯 The two propositions
 
-Open a terminal and run:
+Stated verbatim in the code, in the API response, and on the report's findings page.
+Everything the system reports is a ratio between exactly these two, and nothing else:
+
+|  | Proposition |
+|---|---|
+| **H<sub>p</sub>** | the exhibit is an unmanipulated recording of a real event |
+| **H<sub>d</sub>** | the exhibit is synthetically generated or materially manipulated in the facial region |
+
+A likelihood ratio answers *"how much more probable are these findings if H<sub>d</sub>
+is true than if H<sub>p</sub> is true?"* - which is a question about the evidence. It
+deliberately does **not** answer *"is this video fake?"*, which is a question about
+the world, and which belongs to the Court.
+
+---
+
+## 💡 Why I built this
+
+I started where everyone starts: train a classifier, report AUROC, ship a percentage.
+Then I read what happens to that percentage in a courtroom.
+
+A probability of forgery has no defensible meaning as evidence. Ask the four
+questions that opposing counsel will ask, and it collapses:
+
+| The question | What `P(fake) = 0.97` can answer |
+|---|---|
+| *"Probability under which hypothesis, against which alternative?"* | Nothing. No propositions were ever stated. |
+| *"On what population was that number calibrated, and is my client's phone in it?"* | Nothing. No validated domain was declared. |
+| *"What happens to your conclusion after WhatsApp recompresses the file?"* | Nothing. It was never tested. |
+| *"Can an independent examiner reproduce this exact figure?"* | Nothing. The model is nondeterministic and unversioned. |
+
+Forensic science solved this decades ago, in DNA and in ballistics, with the
+**likelihood ratio** and the ENFSI reporting framework. Nobody had wired a modern
+learned tamper-localisation model into that framework and made the whole thing
+replayable. So the interesting engineering problem was never "detect the deepfake."
+It was: **build the machinery that lets a learned model report a number that survives
+cross-examination - and abstain, loudly, when it cannot.**
+
+Four things fall out of that, and they are the whole project:
+
+1. **A likelihood ratio, not a probability**, fitted on a calibration split that is
+   never trained on.
+2. **A Mahalanobis in-domain gate** - the exhibit is checked against the population
+   we calibrated on, and reported as out-of-domain rather than guessed at.
+3. **An Evidence Fragility Index** - we attack our own verdict and report where it
+   breaks, in units a judge can read.
+4. **A replayable, hash-sealed record** - a second examination reproduces a
+   byte-identical findings hash, or the run is not trusted.
+
+---
+
+## 🧾 What actually comes out
+
+Not a percentage. This, bound to numeric findings by template - never written by a
+language model, because a generated sentence cannot be defended under
+cross-examination:
+
+```text
+OUTCOME          MANIPULATION INDICATED
+log10 LR         +3.982   (clipped at ±6.0, dependence shrinkage λ = 0.5)
+ENFSI verbal     strong support
+
+  "The findings provide strong support for the proposition that the exhibit is
+   synthetically generated or materially manipulated in the facial region, rather
+   than for the competing proposition Hp, which is stated in full alongside it."
+
+FRAGILITY        survives to CRF 34 / 41% rescale / JPEG q38 · flips at CRF 36
+                 BAND: LOW
+IN-DOMAIN        yes  (Mahalanobis d² below the 0.99 quantile of the cal population)
+REASON CODES     -
+```
+
+And when the evidence does not support a conclusion, the system says so in the same
+breath, with a machine-generated reason code rather than a hedge:
+
+```text
+OUTCOME          INCONCLUSIVE
+log10 LR         +0.000
+REASON           no-usable-stream
+                 └─ out-of-validated-domain
+```
+
+> [!NOTE]
+> **`INCONCLUSIVE` is a first-class result, not a failure mode.** Three separate
+> gates can force it - no usable stream, two usable streams pointing in opposite
+> directions, or a fused ratio below the reporting threshold - and each one records
+> *why* in a fixed vocabulary of reason codes. A forensic instrument that cannot
+> abstain is not a forensic instrument.
+
+---
+
+## ⚡ Quickstart
+
+**Examination workstation - no GPU required.** This is everything you need to run the
+forensic core and its acceptance tests.
 
 ```bash
 git clone https://github.com/Jenak26/team-peri-peri-fries.git
 cd team-peri-peri-fries
-```
 
-**Stay in this folder for every remaining step.** If you close the terminal, `cd`
-back into it before continuing.
-
-## Step 2: Put the corpus in place
-
-Copy the `corpus` folder you were given into the `data` folder inside the project.
-
-When you are done, this exact file must exist:
-
-```
-team-peri-peri-fries/data/corpus/index.json
-```
-
-Check it with:
-
-```bash
-python -c "import json; print(json.load(open('data/corpus/index.json'))['index_hash'])"
-```
-
-You should see:
-
-```
-b07d65079449416067387e20b9b400f6da3ad3047bf93af8d21fedc4c2a5fa6b
-```
-
-If you see that line, the data arrived intact. If you get a "file not found" error,
-the folder is in the wrong place. If the number is different, the copy was corrupted
-or the corpus was rebuilt, so ask before continuing.
-
-## Step 3: Create a Python environment
-
-This keeps the project's packages separate from the rest of your machine.
-
-**On Windows (PowerShell):**
-
-```powershell
-python -m venv .venv
-.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-```
-
-**On Linux or Mac:**
-
-```bash
-python -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-```
-
-Your terminal prompt should now start with `(.venv)`. If it does not, the environment
-is not active and everything after this will install to the wrong place.
-
-> **Every time you open a new terminal, run the activate line again.** This is the
-> single most common thing to forget.
-
-## Step 4: Install PyTorch (the GPU part)
-
-Order matters here. PyTorch must be installed **first**, from its own download
-address, or you will get a version that ignores your GPU.
-
-```bash
-pip install torch torchvision --index-url https://download.pytorch.org/whl/cu128
-```
-
-This downloads about 3 GB. It will take a while.
-
-Then install everything else:
-
-```bash
-pip install -r requirements-gpu.txt
-```
-
-## Step 5: Check the GPU actually works
-
-**Do not skip this.** If the GPU is not detected, training silently runs on the
-processor instead, which turns 8 hours into several days.
-
-```bash
-python -c "import torch; print(torch.cuda.is_available(), torch.cuda.get_device_name(0))"
-```
-
-**Good result** looks like:
-
-```
-True NVIDIA GeForce RTX 5060
-```
-
-**Bad result** is `False`, or an error. If you get that, stop and fix it:
-
-- Make sure you ran the `--index-url` command in Step 4 and not a plain `pip install torch`
-- Update your NVIDIA graphics driver, then restart the laptop
-- Run `nvidia-smi` in a terminal. If that command is not found, the driver is missing
-
-## Step 6: Check the code is healthy
-
-```bash
-python -m pytest -q
-```
-
-You should see `76 passed`. If anything fails, stop and report it. Do not start
-training on a broken checkout.
-
-## Step 7: Do a quick practice run
-
-This runs Stage A and Stage B at tiny size, about a minute each. It catches problems
-before you commit to an overnight run. Nothing it produces is kept.
-
-Stage C is not included here, because it is short enough to simply run for real in
-Step 10 and its preparation pass reads the whole corpus.
-
-**On Windows (PowerShell):**
-
-```powershell
-python -m train.stage_a_videoprint --out "$env:TEMP\a.pt" --epochs 1 --batch-size 4 --pairs 16 --workers 0
-python -m train.stage_b_decoder --out "$env:TEMP\b.pt" --stage-a "$env:TEMP\a.pt" --arch unet --epochs 1 --batch-size 2 --crop-size 128 --max-steps 3 --workers 0
-```
-
-**On Linux or Mac:**
-
-```bash
-python -m train.stage_a_videoprint --out /tmp/a.pt --epochs 1 --batch-size 4 --pairs 16 --workers 0
-python -m train.stage_b_decoder --out /tmp/b.pt --stage-a /tmp/a.pt --arch unet --epochs 1 --batch-size 2 --crop-size 128 --max-steps 3 --workers 0
-```
-
-Both should finish without a traceback and print a `saved` line. Some numbers will
-look poor, and Stage B will print `AUROC nan` and `AUROC[poisson] n/a`. That is
-expected at this size and does not mean anything is wrong: three steps of data is not
-enough for those numbers to exist.
-
-If both ran, you are ready for the real thing.
-
-## Step 8: Train Stage A
-
-**Pick the command that matches your GPU.** The batch size is set by how much VRAM
-you have, and getting it wrong is the most common way this fails.
-
-| Your VRAM | Command |
-|---|---|
-| **8 GB** | `python -m train.stage_a_videoprint --epochs 30 --batch-size 64` |
-| **12 GB** | `python -m train.stage_a_videoprint --epochs 30 --batch-size 128` |
-| **16 GB or more** | `python -m train.stage_a_videoprint --epochs 30 --batch-size 256` |
-
-Not sure? The command checks for you. It prints a line like:
-
-```
-VRAM: 8.6 GB total, assuming 6.9 GB usable; activations need ~3.2 GB at batch 64
-```
-
-and refuses to start if the numbers do not work, telling you which batch size to use
-instead. It will not let you begin a run that cannot finish.
-
-It then prints one line per epoch, 30 in total, and saves to `artifacts/` whenever
-the loss improves. **Leave it alone for 6 to 8 hours.**
-
-The `train` number should generally drift downwards. It will not fall smoothly, and
-that is normal for this kind of training.
-
-> **Does a smaller batch make the model worse?** Barely, with this corpus. Stage A
-> learns by comparing patches against patches from *other source clips* in the same
-> batch. This corpus has 9 source clips in the training split, so once the batch is
-> comfortably larger than that, adding more mostly adds patches from clips already
-> represented, which get excluded from the comparison anyway. Batch 256 is specified
-> for a corpus of roughly 2000 clips.
-
-## Step 9: Train Stage B
-
-**Always pass `--crop-size 256` with this corpus.** The frames in it are 256x256.
-The default of 512 upscales every frame, which adds no detail at all but costs four
-times the memory and four times the time. The command warns you if you forget.
-
-| Your VRAM | Command |
-|---|---|
-| **8 GB** | `python -m train.stage_b_decoder --epochs 24 --batch-size 6 --crop-size 256` |
-| **12 GB or more** | `python -m train.stage_b_decoder --epochs 24 --batch-size 12 --crop-size 256` |
-
-Takes 3 to 4 hours. Each line shows `IoU` (how well it finds the tampered pixels,
-higher is better) and `ECE` (how honest its confidence is, **lower** is better).
-
-**If you still get an "out of memory" error**, halve the batch again:
-
-```bash
-python -m train.stage_b_decoder --epochs 24 --batch-size 3 --crop-size 256
-```
-
-**If it prints `[warn] SegFormer unavailable`**, it could not download the pretrained
-model, usually because of no internet. It automatically switches to a simpler network
-and keeps going. Training is still valid, just weaker. Reconnect and rerun if you can.
-
-> **Tip if you want to save time:** Stage B does not actually need Stage A. If you
-> have a second machine or want to start it early, you can run Stage B at the same
-> time as Stage A. It will print `fingerprint source: srm-residual`, which means it
-> is using a built in stand in. Once Stage A finishes, just run Stage B again to
-> upgrade it.
-
-## Step 10: Train Stage C
-
-Two commands. The first prepares data, the second trains. **You must run them in this
-order.**
-
-```bash
-python -m train.stage_c_temporal --cache
-python -m train.stage_c_temporal --epochs 60
-```
-
-The first one takes a few minutes and prints `wrote ...tokens_stage_c.pt`. The second
-takes about 25 minutes.
-
-If you skip the `--cache` command, the second one exits and tells you so.
-
-## Step 11: Lock in the results
-
-```bash
-python -m tools.checksum_artifacts
-```
-
-This creates `artifacts/SHA256SUMS`, a fingerprint of every model file. The court
-report cites these numbers, so they have to travel with the models.
-
-## Step 12: Send the results back
-
-Copy these files from the `artifacts` folder back to the main laptop's `artifacts`
-folder:
-
-- `stage_a_videoprint.pt`
-- `stage_b_decoder.pt`
-- `stage_c_temporal.pt`
-- `SHA256SUMS`
-
-On the main laptop, verify they survived the trip:
-
-```bash
-python -m tools.checksum_artifacts --check
-```
-
-Every line must say `OK`. If any line says `MISMATCH`, the file was damaged in
-transfer. Copy it again.
-
-**You are done.**
-
----
-
-## If something goes wrong
-
-| What you see | What it means | What to do |
-|---|---|---|
-| `corpus index not found` | The corpus is missing or in the wrong folder | Redo Step 2 |
-| `torch.cuda.is_available()` is `False` | Training would run on the processor | Redo Step 4, update your NVIDIA driver |
-| `CUDA out of memory` | Batch too large for your GPU | Lower `--batch-size`, see Steps 8 and 9 |
-| `This run needs about N GB ... but only about M GB is usable` | The VRAM check stopped a run that could not finish | Use the batch size it suggests |
-| Whole laptop freezes, or Task Manager shows memory exhausted | Too many dataloader workers, each a full process | Add `--workers 2` |
-| `[warn] corpus frames are 256x256 but crop_size is 512` | Stage B is upscaling for nothing | Add `--crop-size 256` |
-| `tokens not found ... run with --cache first` | Stage C run in the wrong order | Run the `--cache` command first |
-| `ModuleNotFoundError` | Environment not active | Run the activate line from Step 3 |
-| `cannot import name 'UTC' from 'datetime'` | Code using a Python 3.11 feature on an older interpreter | Fixed. Run `git pull` and try again |
-| `SKIPPED ... ffprobe not on PATH` | ffprobe is missing | Harmless on this machine. Training does not use it |
-| `[warn] SegFormer unavailable` | No internet for the pretrained model | Harmless, it falls back. Reconnect and rerun if you can |
-| `[warn] ... authentic clips vs batch size` | Not much source video | Harmless, training continues |
-| Training is extremely slow | Almost certainly running on the processor | Stop it, redo Step 5 |
-
-**Safe to stop and restart?** Yes. Each stage saves its best result as it goes, so
-pressing Ctrl+C loses at most the current epoch. Rerunning a stage starts it over
-from scratch, it does not resume.
-
----
-
-## If you have no corpus folder
-
-Only do this if you were **not** given a corpus. It builds the training data from
-scratch and needs the original video files.
-
-1. Put the source video into `data/authentic/`. Accepted formats: `.mp4`, `.mov`,
-   `.avi`, `.mkv`, `.webm`, `.m4v`, `.mpg`, `.mpeg`
-2. Every filename must be different, because filenames are used as identities
-3. Run:
-
-```bash
-python -m train.build_corpus --frames 24
-```
-
-It prints a table of how the data was split. Then continue from Step 3 above.
-
-Note that a corpus built here will have a different fingerprint from one built
-elsewhere if the OpenCV versions differ, so prefer copying the corpus when you can.
-
----
-
-# Reference
-
-## Examination laptop setup (no GPU needed)
-
-```bash
 python -m venv .venv
 source .venv/bin/activate          # Windows: .venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
 pip install -r requirements-cpu.txt
 
-python -m pytest -q                # 76 tests
-python -m tools.selftest_lr        # 3 likelihood-ratio acceptance assertions
+python -m pytest -q                # 80 tests
+python -m tools.selftest_lr        # the 3 acceptance assertions
 python -m tools.write_environment  # regenerate artifacts/environment.json
 ```
 
-`tools.selftest_lr` exercises the likelihood-ratio layer with no trained model in
-existence. It must print three `PASS` lines before anything else is worth debugging.
+`tools.selftest_lr` is the one to run first, and it is deliberately runnable **before
+any model exists**:
 
-## Repository layout
-
-```
-peri/core/      forensic layers: canon, errors, forensic_lr, fragility, videoprint
-train/          corpus builder, datasets, augmentation policy, Stage A/B/C training
-tools/          environment record, LR self-test, artifact checksums
-tests/          pytest suite (76 tests, no GPU required)
-artifacts/      checkpoints, calibration.json, environment.json, SHA256SUMS
-data/           source video and built corpus (NOT in git)
-docs/           build plans
+```text
+PASS  clear_manipulation   MANIPULATION INDICATED   log10LR +3.982  reason -
+PASS  unstable             INCONCLUSIVE             log10LR +0.000  reason no-usable-stream
+PASS  out_of_domain        INCONCLUSIVE             log10LR +0.000  reason no-usable-stream
 ```
 
-## How much source video you need
+> [!TIP]
+> Those three lines are the project's real acceptance test: a clear manipulation is
+> reported, an unstable stream abstains, and an out-of-domain exhibit abstains. They
+> exercise the likelihood-ratio layer against synthetic scores with no neural network
+> in existence - which is exactly why the highest-risk component was built and tested
+> first.
 
-Splits are assigned by identity, so the number of source clips sets everything:
+**Training workstation - NVIDIA GPU.** The full walkthrough, written for someone who
+has never trained a model, is in [**docs/TRAINING.md**](docs/TRAINING.md).
 
-| source clips | train | val | cal | test |
-|---:|---:|---:|---:|---:|
-| 15 | 9 | 2 | 2 | 2 |
-| 30 | 18 | 4 | 4 | 4 |
-| 60 | 36 | 9 | 9 | 6 |
-| 100 | 60 | 15 | 15 | 10 |
+---
 
-The `cal` split is the binding constraint. It is never trained on and exists solely
-to fit the likelihood-ratio densities and the Mahalanobis gate. `forensic_lr` fits
-Gaussian KDE densities only when it has at least **15 samples per class** in `cal`,
-and falls back to a ridge-penalised logistic fit below that. The number of authentic
-cal samples equals the number of cal identities, so:
+## 🏗️ Architecture
 
-- **fewer than ~100 source clips**: the logistic fallback is used. It works and is
-  honest, but it is a two-parameter model standing in for a density.
-- **~100 or more**: KDE densities, which is what the design assumes.
+Nine layers. The model stages are the replaceable part; everything around them is the
+product.
 
-The corpus currently shipped (`index_hash b07d6507...`) is built from 15 clips, so it
-uses the logistic fallback. Adding source video is the highest-leverage improvement
-available, and it requires rebuilding and re-transferring the corpus.
+```mermaid
+flowchart TD
+    UP["📥 exhibit"] --> L0
 
-Stage A has a floor of its own. Its contrastive objective draws negatives from the
-other clips in the batch, so it needs at least two authentic clips in `train` and
-warns when the clip count is below the batch size, because most in-batch pairs are
-then masked out as same-clip and the effective negative count collapses.
+    L0["<b>L0 · INTAKE</b><br/>SHA-256 → read-only quarantine<br/>ffprobe · EXIF · working copy"]
 
-## The held-out generator
+    subgraph L1 ["🧠 L1 · MODEL STAGES"]
+        A["<b>Stage A</b> Videoprint<br/>self-supervised acquisition fingerprint<br/><i>trained on AUTHENTIC video only</i>"]
+        B["<b>Stage B</b> Decoder<br/>SegFormer-B2 on RGB + Videoprint<br/>tamper mask + reliability map"]
+        C["<b>Stage C</b> Temporal<br/>transformer over per-frame tokens<br/>verdict + tamper timeline"]
+        S4["<b>S4</b> Provenance<br/>C2PA + metadata contradiction rules<br/><i>rule-based, zero ML</i>"]
+        A --> B --> C
+    end
 
-The corpus is built with four splice methods. The `poisson` method is kept out of
-`train` and `val` entirely. Stage B reports AUROC on it separately, under
-`AUROC[poisson]`. That number is the generalisation claim: how the decoder performs
-on a manipulation family it was never shown.
+    L2["<b>L2 · GATE</b><br/>Mahalanobis distance to the<br/>calibration feature population"]
+    L3["<b>L3 · FRAGILITY</b><br/>adversarial binary search for<br/>the verdict's breaking point"]
+    L4["<b>L4 · LR + FUSION</b><br/>per-stream log10LR → shrunk fusion<br/>→ three-way decision gate"]
+    L5["<b>L5 · LOCALISE</b><br/>timeline · suspect frames<br/>masks with reliability overlay"]
+    L6["<b>L6 · LEDGER</b><br/>append-only SHA-256 hash chain<br/>of every examination event"]
+    L7["<b>L7 · REPORT</b><br/>9-page PDF + Section 63(4)<br/>Part-B draft input sheet"]
+    L8["<b>L8 · REPLAY</b><br/>re-run from the manifest<br/>→ identical findings hash"]
 
-## Determinism
+    L0 --> L1
+    L1 --> L2 --> L3 --> L4 --> L5 --> L7
+    S4 --> L4
+    L0 -.-> L6
+    L4 -.-> L6
+    L7 -.-> L6
+    L7 --> L8
 
-The replay guarantee requires that a second run produces a byte-identical findings
-hash. Concretely:
+    classDef product fill:#0284c7,stroke:#0369a1,color:#fff;
+    classDef swappable fill:#334155,stroke:#1e293b,color:#fff;
+    class L2,L3,L4,L6,L8 product;
+    class A,B,C swappable;
+```
 
-- All floats are quantised and JSON is sorted at hash time, in `peri/core/canon.py`
-  and nowhere else.
-- Seeds derive from `canon.stable_seed()`, which digests its inputs. Python's
-  built-in `hash()` is salted per process and must not be used for anything that
-  reaches a seed or a hash.
-- `train.build_corpus` produces byte-identical frames across separate processes for
-  the same source video and seed. Verified by rebuilding and comparing digests.
-- The corpus contains no absolute paths and can be copied between machines freely.
+> [!IMPORTANT]
+> **The blue boxes are the contribution; the grey boxes are hot-swappable.** Stage A
+> can be replaced by a classical SRM residual filter and the system still produces a
+> complete, defensible examination - a weaker one, reported honestly as weaker. The
+> abstention path, the ledger, the fragility index, and the report's limitations page
+> are never degraded, because those *are* the product.
 
-## Known deviations from the CLAUDE.md specification
+---
 
-Recorded here rather than quietly ignored, because the report's Methods page has to
-state what was actually run.
+## 📐 The likelihood-ratio layer - the heart of the system
 
-- **Stage A parameter count.** `CLAUDE.md` section 4 asks for ~18M trainable
-  parameters and also for "17 layers, 64ch". Those two are inconsistent with each
-  other: a 17-layer DnCNN at 64 channels is about 0.55M parameters. The shipped
-  config uses 17 layers at 96 channels, which is 1.25M. The architecture matches the
-  stated shape; the parameter count does not match the stated total.
-- **Interpreter version.** `artifacts/environment.json` records the interpreter that
-  actually produced it and derives its own deviation text. It is generated, never
-  hand-edited.
-- **Corpus.** `PPF-ICV-1` is an internal validation corpus built by compositing donor
-  regions into authentic clips. It is not FF++ and is never compared against
-  published FF++ numbers.
+[`peri/core/forensic_lr.py`](peri/core/forensic_lr.py) · 519 lines · 5 test modules
 
-## Legal framing
+Each forensic stream produces a raw score. That score is meaningless until it is
+turned into a ratio against fitted densities:
 
-This system assists forensic examination. It does not replace judicial determination
-of admissibility or weight. Section 63(4) of the Bharatiya Sakshya Adhiniyam, 2023
-requires a certificate signed by a person in charge of the device and an expert; this
-repository generates inputs for that human expert and signs nothing.
+```
+                     f(score | Hd)
+log10 LR  =  log10  ---------------
+                     f(score | Hp)
+```
 
-Where C2PA provenance and forensic findings disagree, both are reported and the
-forensic findings take precedence. C2PA verifies that provenance claims have not been
-tampered with, not that they are truthful.
+Both densities are fitted **only on the held-out `cal` split**, which is never
+trained on. Gaussian KDE with a shared Silverman bandwidth where there are at least
+15 samples per class; a ridge-penalised logistic fit below that, with the fitted
+prior log-odds subtracted so what comes back is a likelihood ratio and not a
+posterior in disguise.
+
+### Three gates a stream must pass to be counted
+
+| Gate | Reason code if it fails |
+|---|---|
+| **In validated domain** - Mahalanobis d² of the stream's *feature vector* sits below the 0.99 quantile of the calibration population | `out-of-validated-domain` |
+| **Sign-stable under degradation** - the sign of the ratio does not flip across the stress ladder | `sign-unstable-under-degradation` |
+| **Magnitude-stable** - the IQR of the ratio across the stress ladder stays under 1.0 | `unstable-under-degradation` |
+
+### Fusion, and the conservatism that is stated rather than assumed
+
+```
+log10LR_total = clip( λ · Σ wₛ · median(stressₛ) ,  ±6.0 )      λ = 0.5
+```
+
+Forensic streams derived from the same pixels are **correlated**, and this system
+never claims otherwise. The shrinkage factor λ = 0.5 halves the fused evidence
+strength. It is deliberate, stated conservatism, justified in the report rather than
+buried - because an unjustified independence assumption is the single easiest way to
+have a fused likelihood ratio thrown out.
+
+### The decision gate - exactly three outcomes
+
+```mermaid
+flowchart TD
+    S["usable streams"] --> Q1{"any usable<br/>stream?"}
+    Q1 -->|no| I1["<b>INCONCLUSIVE</b><br/>no-usable-stream"]
+    Q1 -->|yes| Q2{"two usable streams<br/>each stronger than 1.0<br/>pointing opposite ways?"}
+    Q2 -->|yes| I2["<b>INCONCLUSIVE</b><br/>cross-stream-contradiction"]
+    Q2 -->|no| Q3{"fused strength<br/>at least 1.0 ?"}
+    Q3 -->|no| I3["<b>INCONCLUSIVE</b><br/>evidence-strength-<br/>below-reporting-threshold"]
+    Q3 -->|yes| Q4{"sign"}
+    Q4 -->|"positive"| M["<b>MANIPULATION INDICATED</b>"]
+    Q4 -->|"negative"| AU["<b>AUTHENTICITY SUPPORTED</b>"]
+
+    classDef inc fill:#b45309,stroke:#92400e,color:#fff;
+    classDef pos fill:#b91c1c,stroke:#991b1b,color:#fff;
+    classDef neg fill:#15803d,stroke:#166534,color:#fff;
+    class I1,I2,I3 inc;
+    class M pos;
+    class AU neg;
+```
+
+### The ENFSI verbal scale
+
+Every number is reported alongside its verbal equivalent **with the supported
+proposition named in full** - never "97% fake", never a bare adjective:
+
+| \|log10 LR\| | Verbal equivalent |
+|---:|---|
+| < 1 | no support |
+| 1 – 2 | moderate support |
+| 2 – 3 | moderately strong support |
+| 3 – 4 | strong support |
+| 4 – 5 | very strong support |
+| > 5 | extremely strong support |
+
+---
+
+## 💥 The Evidence Fragility Index
+
+[`peri/core/fragility.py`](peri/core/fragility.py)
+
+Every detector paper reports accuracy on pristine data. Real exhibits arrive after
+WhatsApp, a screenshot, a re-upload, and a re-encode. So the system **attacks its own
+conclusion** and reports the exact strength at which it breaks, on three independent
+laundering axes:
+
+| Axis | Family | Ladder |
+|---|---|---|
+| `reencode_crf` | codec re-encode | CRF 18 → 51 |
+| `rescale` | spatial rescale | 1.0× → 0.10× |
+| `jpeg_quality` | JPEG recompression | q95 → q5 |
+
+Reported in units a judge can read, not in decibels:
+
+> Conclusion survives to **CRF 34 / 41% rescale / JPEG q38**. Flips at CRF 36.
+> **FRAGILITY: LOW.**
+
+A **HIGH** band - a conclusion that flips under ordinary social-media recompression -
+force-abstains the whole examination. A verdict that a re-upload can erase is not a
+verdict.
+
+> [!WARNING]
+> **The disjointness rule, and why it is asserted in code.** The transforms used to
+> attack the verdict and the augmentations used to train the models are drawn from
+> **disjoint families with non-overlapping parameter ranges** - training sees blur,
+> additive noise, flip, and crop; fragility uses codec, rescale, and JPEG, and
+> nothing else. If a model were trained on the same degradation used to test it, the
+> robustness claim would be circular, and it would be destroyed in the first minute
+> of questioning. `fragility.assert_transform_disjointness()` enforces this at import
+> time, and both transform sets are printed in full on the report's Methods page.
+
+---
+
+## 🔒 Determinism and replay
+
+An examination that cannot be reproduced is not an examination. The replay guarantee
+is that re-running from the examination manifest yields a **byte-identical findings
+hash** - the two hashes are shown side by side, and the UI turns green only if they
+match.
+
+That is a design constraint, not a feature bolted on afterwards:
+
+- **All float quantisation and JSON key ordering live in
+  [`peri/core/canon.py`](peri/core/canon.py) and nowhere else.** One canonicalisation
+  path, so there is exactly one place a divergence can be introduced.
+- **Python's built-in `hash()` is banned** anywhere that reaches a seed or a digest.
+  It is salted per process, so it silently breaks replay across runs. Seeds come from
+  `canon.stable_seed()`, which digests its inputs instead.
+- **The corpus builder is process-independent** - byte-identical frames across
+  separate processes for the same source video and seed, verified by rebuilding and
+  comparing digests.
+- **The corpus contains no absolute paths**, so it can move between machines freely.
+- **Every model checkpoint is SHA-256'd** into `artifacts/SHA256SUMS`, and those
+  digests travel into the examination manifest and onto the report's reproducibility
+  page.
+
+CI runs the canonicalisation check in a **separate process with a random
+`PYTHONHASHSEED`**, precisely so a salted-hash regression cannot pass unnoticed.
+
+---
+
+## 🧪 How it's tested
+
+```bash
+python -m pytest -q             # 80 tests, no GPU required, ~4 seconds
+python -m tools.selftest_lr     # 3 forensic acceptance assertions
+python -m ruff check .
+```
+
+| Suite | What it pins down |
+|---|---|
+| `test_forensic_lr_acceptance.py` | The three headline scenarios: clear manipulation reported, unstable abstains, out-of-domain abstains |
+| `test_forensic_lr_density.py` | KDE and the logistic fallback, and that the fallback returns a ratio rather than a posterior |
+| `test_forensic_lr_decision.py` | Every path through the three-way gate, and every reason code |
+| `test_forensic_lr_stream.py` | The three stream-exclusion gates, and Mahalanobis on feature vectors rather than on scores |
+| `test_forensic_lr_scale.py` | ENFSI band boundaries and the named-proposition sentence |
+| `test_canon.py` | Quantisation, sorted-key canonical JSON, cross-process hash stability |
+| `test_legal_language.py` | **CI-enforced.** A fixed list of overclaiming phrases fails the build |
+| `test_environment_record.py` | `artifacts/environment.json` is generated, never hand-edited, and records its own deviations |
+| `test_phase0_gate.py` | Layout, error hierarchy, interpreter floor, ffprobe availability |
+
+> [!NOTE]
+> **The legal-language gate is a real test, not a comment.** A fixed vocabulary of
+> overclaiming phrases fails CI on sight, matched with word boundaries so that
+> `improves` and `approves` do not trip the rule they contain. It also asserts that
+> it *can* fail - a gate that cannot fail is not a gate.
+
+---
+
+## 🧩 Build status
+
+Honest state of the tree. The CPU forensic spine is built and tested first, on
+purpose: it is the part that has to work whether or not the models finish training.
+
+| | Component | State |
+|---|---|---|
+| ✅ | **Likelihood-ratio engine** (`forensic_lr`) | KDE + logistic densities, Mahalanobis gate, stability gates, shrunk fusion, three-way decision, ENFSI scale, reason codes |
+| ✅ | **Determinism spine** (`canon`) | Quantisation, canonical JSON, stable seeds, file and object digests |
+| ✅ | **Fragility axes** (`fragility`) | Three ladders, transform-set description, disjointness assertion enforced at import |
+| ✅ | **Videoprint extractor** (`videoprint`) | 17-layer DnCNN + projection head, with an SRM residual filter bank as the fallback fingerprint |
+| ✅ | **Corpus builder & training** (`train/`) | Four documented splice methods with exact masks, identity+generator splits, Stage A/B/C training scripts, VRAM preflight |
+| ✅ | **Tooling** (`tools/`) | Environment record, artifact checksums, LR self-test |
+| 🚧 | **Fragility search** | Ladders and the disjointness rule are in; the binary search for the breaking point is next |
+| ⬜ | **Intake & ledger** (L0, L6) | SHA-256 quarantine, ffprobe/EXIF, append-only hash chain |
+| ⬜ | **Provenance** (S4) | C2PA manifest read + metadata contradiction rules, rule-based |
+| ⬜ | **Inference wrappers** | Stage B decoder and Stage C temporal inference paths |
+| ⬜ | **Calibration** (Stage D) | Fit `artifacts/calibration.json` from the `cal` split |
+| ⬜ | **API & frontend** | FastAPI `/examine /findings /report /ledger /replay`, single-file HTML |
+| ⬜ | **Report** (L7) | 9-page ReportLab PDF + Section 63(4) Part-B draft input sheet |
+
+---
+
+## 🛠️ Design decisions
+
+ADR-style. The *why* matters more than the *what*:
+
+| Decision | Choice | Why |
+|---|---|---|
+| **Output format** | Likelihood ratio, never a probability | A probability of forgery has no stated propositions and no defensible meaning as evidence |
+| **Build order** | The LR layer first, unit-tested against synthetic scores before any model existed | It is the highest-risk component, and the one thing that cannot be salvaged late |
+| **Fusion** | Fixed dependence shrinkage λ = 0.5 | Streams from the same pixels are correlated; stated conservatism beats an independence assumption that cannot be defended |
+| **Splits** | By identity **and** by generator, with one generator held out entirely | Random splits leak identity and inflate every number; the held-out generator *is* the generalisation claim |
+| **Calibration** | A `cal` split that is never trained on, ever | A model calibrated on data it has seen reports a ratio that means nothing |
+| **Abstention** | Three independent gates, any of which forces `INCONCLUSIVE` | An instrument that always answers is an instrument that is sometimes wrong without saying so |
+| **Fragility transforms** | Disjoint from training augmentations, asserted in code | Overlap makes the robustness claim circular |
+| **Provenance (S4)** | Rule-based, zero ML | It must still work if every training run fails, and rules are explainable on the stand |
+| **Report prose** | Templated sentences bound to numeric findings | An LLM-written sentence cannot be traced to a number, so it cannot be defended |
+| **Tamper-evidence** | An append-only SHA-256 hash chain, not a blockchain | A hash chain gives tamper-evidence; the accredited lab is the trust anchor. A blockchain adds a dependency and answers a question nobody asked |
+| **Headline metric** | AUROC on the *unseen* generator, reported with ECE | A well-calibrated 0.85 is worth more in court than an overconfident 0.97, and we say so out loud |
+
+---
+
+## ⚖️ Legal framing
+
+> [!CAUTION]
+> **This system assists forensic examination. It does not replace judicial
+> determination of admissibility or weight.** Automated detection is probabilistic.
+> Absence of detected manipulation does not establish authenticity. Findings are
+> conditional on the declared validated domain; exhibits outside that domain are
+> reported as inconclusive.
+
+Section 63(4) of the Bharatiya Sakshya Adhiniyam, 2023 requires a certificate signed
+by a person in charge of the device **and** by an expert. This repository generates
+*inputs* for that human expert. It signs nothing. The Part-B sheet it produces is
+watermarked **DRAFT - REQUIRES EXPERT REVIEW AND SIGNATURE**, and it does not itself
+constitute the certificate.
+
+**On C2PA:** a valid C2PA manifest verifies that provenance claims have not been
+tampered with - *not* that those claims are truthful. Where forensic findings
+contradict a manifest, both are reported and the forensic findings take precedence.
+
+This framing is CI-enforced. See [`tests/test_legal_language.py`](tests/test_legal_language.py).
+
+---
+
+## 📚 Prior art
+
+The fingerprint paradigm is not ours. Its video formulation, its adversarial
+fragility reporting, and its statutory packaging are. Credited here and on the
+report's Methods page:
+
+| Work | What we take from it |
+|---|---|
+| **[Noiseprint](https://arxiv.org/abs/1808.08396)** (Cozzolino & Verdoliva, TIFS 2019) | The camera-model fingerprint via self-supervised residual learning |
+| **[TruFor](https://arxiv.org/abs/2212.10957)** (CVPR 2023) | Learned fingerprint + RGB into a dual decoder producing a mask *and* a confidence map |
+| **DiCoME** (ICML 2026) · **DTRA** (ICMR 2026) · **GenD** (WACV 2026) | Contemporary manipulation-localisation and robustness framing |
+| **NTIRE 2026 Robust Deepfake Detection Challenge** | The laundering-robustness threat model |
+| **[C2PA](https://c2pa.org/) / `c2pa-python`** | Provenance manifest reading |
+| **[ENFSI Guideline for Evaluative Reporting](https://enfsi.eu/)** | The likelihood-ratio framework and the verbal equivalence scale |
+
+**Our claim, stated no more strongly than this:** we extend learned
+acquisition-fingerprint forgery localisation from images to video via
+codec-trace-conditioned self-supervised fingerprint learning and temporal
+aggregation, and embed it in a judicial examination protocol reporting an ENFSI
+likelihood ratio, a per-exhibit Evidence Fragility Index, a mandatory abstention
+path, and a replayable hash-sealed record structured to Section 63(4) BSA.
+
+---
+
+## 🗺️ Repository layout
+
+```
+peri/core/            the forensic layers
+  canon.py            determinism: quantisation, canonical JSON, stable seeds, digests
+  forensic_lr.py      LR densities, in-domain gate, fusion, three-way decision
+  fragility.py        laundering axes + the training/attack disjointness rule
+  videoprint.py       DnCNN fingerprint extractor + SRM residual fallback
+  errors.py           one rooted exception hierarchy
+
+train/                corpus builder, datasets, augmentation policy, Stage A/B/C
+tools/                environment record · LR self-test · artifact checksums
+tests/                80 tests, no GPU required
+artifacts/            checkpoints · calibration.json · environment.json · SHA256SUMS
+data/                 source video and built corpus (git-ignored)
+evidence/{EVD_ID}/    original.ro · working.mp4 · findings.json · ledger.jsonl · report.pdf
+docs/                 training guide · methodology · build plans
+```
+
+---
+
+## 📖 Documentation
+
+- [**🎓 Training guide**](docs/TRAINING.md) - bare laptop to three finished checkpoints, written for someone who has never trained a model. Includes a VRAM-sized command table and a full troubleshooting matrix.
+- [**🔬 Methodology and honest limitations**](docs/METHODOLOGY.md) - the corpus, why splits are by identity and generator, what the `cal` split can support at its current size, determinism guarantees, and every deviation from spec.
+- [**🤝 Contributing**](CONTRIBUTING.md) - the rules that are not about style.
+- [**🔐 Security policy**](SECURITY.md) - including forensic-integrity defects, handled at the same severity as remote code execution.
+- [**⚙️ CLAUDE.md**](CLAUDE.md) - the authoritative design specification this build is held against.
+
+---
+
+## 📜 License
+
+Released under the [MIT License](LICENSE), with an additional forensic-use notice:
+the permission grant covers the source code, and is not a warranty of fitness for any
+evidentiary, investigative, or judicial purpose.
+
+If you use this work, please cite it - see [`CITATION.cff`](CITATION.cff).
