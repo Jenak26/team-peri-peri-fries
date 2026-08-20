@@ -19,15 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
----
-
-ADDITIONAL NOTICE - FORENSIC USE
-
-This software is forensic decision support. It assists a human examiner; it does
-not replace one, and it does not determine the admissibility or the evidentiary
-weight of any exhibit, which are matters for the Court. The MIT permission grant
-above covers copying and modification of the source code only. It is not a
-warranty of fitness for any evidentiary, investigative, or judicial purpose, and
-no output of this software should be presented as an expert opinion unless a
-qualified examiner has independently reviewed and signed it.

@@ -500,14 +500,19 @@ docs/                 training guide · methodology · build plans
 - [**🔬 Methodology and honest limitations**](docs/METHODOLOGY.md) - the corpus, why splits are by identity and generator, what the `cal` split can support at its current size, determinism guarantees, and every deviation from spec.
 - [**🤝 Contributing**](CONTRIBUTING.md) - the rules that are not about style.
 - [**🔐 Security policy**](SECURITY.md) - including forensic-integrity defects, handled at the same severity as remote code execution.
+- [**⚠️ Forensic-use notice**](NOTICE.md) - what this software is, and what the MIT grant does not cover.
 - [**⚙️ CLAUDE.md**](CLAUDE.md) - the authoritative design specification this build is held against.
 
 ---
 
 ## 📜 License
 
-Released under the [MIT License](LICENSE), with an additional forensic-use notice:
-the permission grant covers the source code, and is not a warranty of fitness for any
-evidentiary, investigative, or judicial purpose.
+Released under the [MIT License](LICENSE).
+
+Please also read [**NOTICE.md**](NOTICE.md). It adds no conditions to the MIT grant -
+it states the intended scope of use, because this software produces material that may
+be placed before a court. The short version: the permission grant covers the source
+code, and is not a warranty of fitness for any evidentiary, investigative, or
+judicial purpose.
 
 If you use this work, please cite it - see [`CITATION.cff`](CITATION.cff).
