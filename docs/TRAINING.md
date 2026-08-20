@@ -1,4 +1,4 @@
-# 🎓 Training Guide
+# Training Guide
 
 **A step-by-step walkthrough from a bare laptop to three finished model checkpoints.**
 Written to be followed by someone who has never trained a neural network. You do not

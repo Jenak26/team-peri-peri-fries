@@ -1,4 +1,4 @@
-# 🔬 Methodology and Honest Limitations
+# Methodology and Honest Limitations
 
 **Why the corpus is built the way it is, what the calibration split can and cannot
 support at its current size, how determinism is achieved, and every place this build

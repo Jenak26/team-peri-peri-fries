@@ -9,6 +9,15 @@ type: software
 authors:
   - given-names: Janak
     family-names: Kabra
+    alias: Jenak26
+    affiliation: Vellore Institute of Technology, Vellore
+  - given-names: Atharva
+    family-names: Agrawal
+    alias: aa1912
+    affiliation: Vellore Institute of Technology, Vellore
+  - alias: varadshelar6610-hub
+    affiliation: Vellore Institute of Technology, Vellore
+  - alias: zephyerknight
     affiliation: Vellore Institute of Technology, Vellore
 repository-code: 'https://github.com/Jenak26/team-peri-peri-fries'
 abstract: >-

@@ -39,5 +39,5 @@ warranties, and that disclaimer is load-bearing here.
 ## Third-party components
 
 Model architectures and forensic methodology draw on prior published work,
-credited in the [README](README.md#-prior-art) and reproduced on the generated
+credited in the [README](README.md#prior-art) and reproduced on the generated
 report's Methods page. The fingerprint paradigm is not original to this project.

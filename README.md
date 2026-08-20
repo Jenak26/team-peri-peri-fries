@@ -1,4 +1,4 @@
-# ⚖️ Team Peri Peri Fries
+# Team Peri Peri Fries
 
 ### A Judicial Digital Evidence Authentication Engine
 
@@ -9,8 +9,8 @@
 [![CI](https://img.shields.io/github/actions/workflow/status/Jenak26/team-peri-peri-fries/ci.yml?style=for-the-badge&label=CI&logo=githubactions&logoColor=white)](https://github.com/Jenak26/team-peri-peri-fries/actions/workflows/ci.yml)
 [![Tests](https://img.shields.io/badge/tests-80%20passing-brightgreen?style=for-the-badge)](tests/)
 [![Ruff](https://img.shields.io/badge/lint-ruff-D7FF64?style=for-the-badge&logo=ruff&logoColor=black)](ruff.toml)
-[![Reporting](https://img.shields.io/badge/reporting-ENFSI%20likelihood%20ratio-2C5985?style=for-the-badge)](#-the-likelihood-ratio-layer--the-heart-of-the-system)
-[![Replay](https://img.shields.io/badge/replay-byte--identical%20findings%20hash-0284c7?style=for-the-badge)](#-determinism-and-replay)
+[![Reporting](https://img.shields.io/badge/reporting-ENFSI%20likelihood%20ratio-2C5985?style=for-the-badge)](#the-likelihood-ratio-layer---the-heart-of-the-system)
+[![Replay](https://img.shields.io/badge/replay-byte--identical%20findings%20hash-0284c7?style=for-the-badge)](#determinism-and-replay)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
 
 </div>
@@ -32,7 +32,7 @@ record that a second run reproduces byte-for-byte.
 
 ---
 
-## 🎯 The two propositions
+## The two propositions
 
 Stated verbatim in the code, in the API response, and on the report's findings page.
 Everything the system reports is a ratio between exactly these two, and nothing else:
@@ -49,10 +49,10 @@ the world, and which belongs to the Court.
 
 ---
 
-## 💡 Why I built this
+## Why we built this
 
-I started where everyone starts: train a classifier, report AUROC, ship a percentage.
-Then I read what happens to that percentage in a courtroom.
+We started where everyone starts: train a classifier, report AUROC, ship a percentage.
+Then we read what happens to that percentage in a courtroom.
 
 A probability of forgery has no defensible meaning as evidence. Ask the four
 questions that opposing counsel will ask, and it collapses:
@@ -84,7 +84,7 @@ Four things fall out of that, and they are the whole project:
 
 ---
 
-## 🧾 What actually comes out
+## What actually comes out
 
 Not a percentage. This, bound to numeric findings by template - never written by a
 language model, because a generated sentence cannot be defended under
@@ -124,7 +124,7 @@ REASON           no-usable-stream
 
 ---
 
-## ⚡ Quickstart
+## Quickstart
 
 **Examination workstation - no GPU required.** This is everything you need to run the
 forensic core and its acceptance tests.
@@ -164,18 +164,18 @@ has never trained a model, is in [**docs/TRAINING.md**](docs/TRAINING.md).
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 Nine layers. The model stages are the replaceable part; everything around them is the
 product.
 
 ```mermaid
 flowchart TD
-    UP["📥 exhibit"] --> L0
+    UP["exhibit"] --> L0
 
     L0["<b>L0 · INTAKE</b><br/>SHA-256 → read-only quarantine<br/>ffprobe · EXIF · working copy"]
 
-    subgraph L1 ["🧠 L1 · MODEL STAGES"]
+    subgraph L1 ["L1 · MODEL STAGES"]
         A["<b>Stage A</b> Videoprint<br/>self-supervised acquisition fingerprint<br/><i>trained on AUTHENTIC video only</i>"]
         B["<b>Stage B</b> Decoder<br/>SegFormer-B2 on RGB + Videoprint<br/>tamper mask + reliability map"]
         C["<b>Stage C</b> Temporal<br/>transformer over per-frame tokens<br/>verdict + tamper timeline"]
@@ -214,7 +214,7 @@ flowchart TD
 
 ---
 
-## 📐 The likelihood-ratio layer - the heart of the system
+## The likelihood-ratio layer - the heart of the system
 
 [`peri/core/forensic_lr.py`](peri/core/forensic_lr.py) · 519 lines · 5 test modules
 
@@ -291,7 +291,7 @@ proposition named in full** - never "97% fake", never a bare adjective:
 
 ---
 
-## 💥 The Evidence Fragility Index
+## The Evidence Fragility Index
 
 [`peri/core/fragility.py`](peri/core/fragility.py)
 
@@ -327,7 +327,7 @@ verdict.
 
 ---
 
-## 🔒 Determinism and replay
+## Determinism and replay
 
 An examination that cannot be reproduced is not an examination. The replay guarantee
 is that re-running from the examination manifest yields a **byte-identical findings
@@ -355,7 +355,7 @@ CI runs the canonicalisation check in a **separate process with a random
 
 ---
 
-## 🧪 How it's tested
+## How it's tested
 
 ```bash
 python -m pytest -q             # 80 tests, no GPU required, ~4 seconds
@@ -383,30 +383,30 @@ python -m ruff check .
 
 ---
 
-## 🧩 Build status
+## Build status
 
 Honest state of the tree. The CPU forensic spine is built and tested first, on
 purpose: it is the part that has to work whether or not the models finish training.
 
-| | Component | State |
+| Status | Component | Detail |
 |---|---|---|
-| ✅ | **Likelihood-ratio engine** (`forensic_lr`) | KDE + logistic densities, Mahalanobis gate, stability gates, shrunk fusion, three-way decision, ENFSI scale, reason codes |
-| ✅ | **Determinism spine** (`canon`) | Quantisation, canonical JSON, stable seeds, file and object digests |
-| ✅ | **Fragility axes** (`fragility`) | Three ladders, transform-set description, disjointness assertion enforced at import |
-| ✅ | **Videoprint extractor** (`videoprint`) | 17-layer DnCNN + projection head, with an SRM residual filter bank as the fallback fingerprint |
-| ✅ | **Corpus builder & training** (`train/`) | Four documented splice methods with exact masks, identity+generator splits, Stage A/B/C training scripts, VRAM preflight |
-| ✅ | **Tooling** (`tools/`) | Environment record, artifact checksums, LR self-test |
-| 🚧 | **Fragility search** | Ladders and the disjointness rule are in; the binary search for the breaking point is next |
-| ⬜ | **Intake & ledger** (L0, L6) | SHA-256 quarantine, ffprobe/EXIF, append-only hash chain |
-| ⬜ | **Provenance** (S4) | C2PA manifest read + metadata contradiction rules, rule-based |
-| ⬜ | **Inference wrappers** | Stage B decoder and Stage C temporal inference paths |
-| ⬜ | **Calibration** (Stage D) | Fit `artifacts/calibration.json` from the `cal` split |
-| ⬜ | **API & frontend** | FastAPI `/examine /findings /report /ledger /replay`, single-file HTML |
-| ⬜ | **Report** (L7) | 9-page ReportLab PDF + Section 63(4) Part-B draft input sheet |
+| DONE | **Likelihood-ratio engine** (`forensic_lr`) | KDE + logistic densities, Mahalanobis gate, stability gates, shrunk fusion, three-way decision, ENFSI scale, reason codes |
+| DONE | **Determinism spine** (`canon`) | Quantisation, canonical JSON, stable seeds, file and object digests |
+| DONE | **Fragility axes** (`fragility`) | Three ladders, transform-set description, disjointness assertion enforced at import |
+| DONE | **Videoprint extractor** (`videoprint`) | 17-layer DnCNN + projection head, with an SRM residual filter bank as the fallback fingerprint |
+| DONE | **Corpus builder & training** (`train/`) | Four documented splice methods with exact masks, identity+generator splits, Stage A/B/C training scripts, VRAM preflight |
+| DONE | **Tooling** (`tools/`) | Environment record, artifact checksums, LR self-test |
+| IN PROGRESS | **Fragility search** | Ladders and the disjointness rule are in; the binary search for the breaking point is next |
+| PLANNED | **Intake & ledger** (L0, L6) | SHA-256 quarantine, ffprobe/EXIF, append-only hash chain |
+| PLANNED | **Provenance** (S4) | C2PA manifest read + metadata contradiction rules, rule-based |
+| PLANNED | **Inference wrappers** | Stage B decoder and Stage C temporal inference paths |
+| PLANNED | **Calibration** (Stage D) | Fit `artifacts/calibration.json` from the `cal` split |
+| PLANNED | **API & frontend** | FastAPI `/examine /findings /report /ledger /replay`, single-file HTML |
+| PLANNED | **Report** (L7) | 9-page ReportLab PDF + Section 63(4) Part-B draft input sheet |
 
 ---
 
-## 🛠️ Design decisions
+## Design decisions
 
 ADR-style. The *why* matters more than the *what*:
 
@@ -426,7 +426,7 @@ ADR-style. The *why* matters more than the *what*:
 
 ---
 
-## ⚖️ Legal framing
+## Legal framing
 
 > [!CAUTION]
 > **This system assists forensic examination. It does not replace judicial
@@ -449,7 +449,7 @@ This framing is CI-enforced. See [`tests/test_legal_language.py`](tests/test_leg
 
 ---
 
-## 📚 Prior art
+## Prior art
 
 The fingerprint paradigm is not ours. Its video formulation, its adversarial
 fragility reporting, and its statutory packaging are. Credited here and on the
@@ -473,7 +473,7 @@ path, and a replayable hash-sealed record structured to Section 63(4) BSA.
 
 ---
 
-## 🗺️ Repository layout
+## Repository layout
 
 ```
 peri/core/            the forensic layers
@@ -494,18 +494,32 @@ docs/                 training guide · methodology · build plans
 
 ---
 
-## 📖 Documentation
+## The team
 
-- [**🎓 Training guide**](docs/TRAINING.md) - bare laptop to three finished checkpoints, written for someone who has never trained a model. Includes a VRAM-sized command table and a full troubleshooting matrix.
-- [**🔬 Methodology and honest limitations**](docs/METHODOLOGY.md) - the corpus, why splits are by identity and generator, what the `cal` split can support at its current size, determinism guarantees, and every deviation from spec.
-- [**🤝 Contributing**](CONTRIBUTING.md) - the rules that are not about style.
-- [**🔐 Security policy**](SECURITY.md) - including forensic-integrity defects, handled at the same severity as remote code execution.
-- [**⚠️ Forensic-use notice**](NOTICE.md) - what this software is, and what the MIT grant does not cover.
-- [**⚙️ CLAUDE.md**](CLAUDE.md) - the authoritative design specification this build is held against.
+Built by four of us. Every design decision in the table above was argued out loud
+before it was written down.
+
+| Member | GitHub |
+|---|---|
+| **Janak Kabra** | [@Jenak26](https://github.com/Jenak26) |
+| **Atharva Agrawal** | [@aa1912](https://github.com/aa1912) |
+| | [@varadshelar6610-hub](https://github.com/varadshelar6610-hub) |
+| | [@zephyerknight](https://github.com/zephyerknight) |
 
 ---
 
-## 📜 License
+## Documentation
+
+- [**Training guide**](docs/TRAINING.md) - bare laptop to three finished checkpoints, written for someone who has never trained a model. Includes a VRAM-sized command table and a full troubleshooting matrix.
+- [**Methodology and honest limitations**](docs/METHODOLOGY.md) - the corpus, why splits are by identity and generator, what the `cal` split can support at its current size, determinism guarantees, and every deviation from spec.
+- [**Contributing**](CONTRIBUTING.md) - the rules that are not about style.
+- [**Security policy**](SECURITY.md) - including forensic-integrity defects, handled at the same severity as remote code execution.
+- [**Forensic-use notice**](NOTICE.md) - what this software is, and what the MIT grant does not cover.
+- [**CLAUDE.md**](CLAUDE.md) - the authoritative design specification this build is held against.
+
+---
+
+## License
 
 Released under the [MIT License](LICENSE).
 
