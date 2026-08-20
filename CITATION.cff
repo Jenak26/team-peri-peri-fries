@@ -15,9 +15,13 @@ authors:
     family-names: Agrawal
     alias: aa1912
     affiliation: Vellore Institute of Technology, Vellore
-  - alias: varadshelar6610-hub
+  - given-names: Varad
+    family-names: Shelar
+    alias: varadshelar6610-hub
     affiliation: Vellore Institute of Technology, Vellore
-  - alias: zephyerknight
+  - given-names: Vasu
+    family-names: Agrawal
+    alias: zephyerknight
     affiliation: Vellore Institute of Technology, Vellore
 repository-code: 'https://github.com/Jenak26/team-peri-peri-fries'
 abstract: >-

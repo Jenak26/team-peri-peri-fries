@@ -503,8 +503,8 @@ before it was written down.
 |---|---|
 | **Janak Kabra** | [@Jenak26](https://github.com/Jenak26) |
 | **Atharva Agrawal** | [@aa1912](https://github.com/aa1912) |
-| | [@varadshelar6610-hub](https://github.com/varadshelar6610-hub) |
-| | [@zephyerknight](https://github.com/zephyerknight) |
+| **Varad Shelar** | [@varadshelar6610-hub](https://github.com/varadshelar6610-hub) |
+| **Vasu Agrawal** | [@zephyerknight](https://github.com/zephyerknight) |
 
 ---
 
