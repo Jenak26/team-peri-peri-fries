@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.pyc
+*.pt
+*.onnx
+evidence/
+data/authentic/*
+data/corpus/*
+!data/authentic/.gitkeep
+!data/corpus/.gitkeep
+web/vendor/*.js
+.pytest_cache/

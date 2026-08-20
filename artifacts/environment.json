@@ -1,0 +1,40 @@
+{
+  "binaries": {
+    "ffmpeg": "ffmpeg version 9.0-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+    "ffprobe": "ffprobe version 9.0-full_build-www.gyan.dev Copyright (c) 2007-2026 the FFmpeg developers"
+  },
+  "deviations": [
+    "CLAUDE.md section 1 specifies Python 3.11; this build runs Python 3.12 because 3.11 is not installed on the examination workstation and every pinned dependency publishes 3.12 wheels.",
+    "torch is installed from the CPU wheel index on the examination workstation, which has no CUDA device. Model training was performed on a separate CUDA 12.8 workstation; checkpoint SHA-256 values are recorded in the examination manifest."
+  ],
+  "generated_utc": "2026-08-20T06:52:17Z",
+  "packages": {
+    "c2pa-python": "0.10.0",
+    "fastapi": "0.115.5",
+    "numpy": "2.1.3",
+    "opencv-python-headless": "4.10.0.84",
+    "pandas": "2.2.3",
+    "pillow": "11.0.0",
+    "pytest": "8.3.4",
+    "python-multipart": "0.0.19",
+    "reportlab": "4.2.5",
+    "scikit-learn": "1.5.2",
+    "scipy": "1.14.1",
+    "torch": "2.13.0+cpu",
+    "torchvision": "0.28.0+cpu",
+    "uvicorn": "0.32.1"
+  },
+  "platform": {
+    "machine": "AMD64",
+    "processor": "Intel64 Family 6 Model 140 Stepping 1, GenuineIntel",
+    "release": "11",
+    "system": "Windows"
+  },
+  "python": {
+    "executable": "python.exe",
+    "implementation": "CPython",
+    "version": "3.13.5"
+  },
+  "record_hash": "5769eac55cca240a7153768cc2c0cfd2f32cfbf14a21068c11b4bf112edd068a",
+  "schema": "peri.environment/1"
+}
