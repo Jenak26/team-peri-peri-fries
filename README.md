@@ -7,9 +7,9 @@ This repository contains the Team Peri Peri Fries v2 forensic examination protoc
 To train the models (Stage A, B, and C) on a separate laptop equipped with a GPU (e.g., NVIDIA RTX 5060 or better), follow these instructions:
 
 ### 1. Transfer the Files
-A training bundle has been pre-packaged for you. Transfer the `training_bundle.zip` file from the root of this repository to your training laptop. 
+Transfer this entire repository folder to your training laptop. You can do this by downloading a ZIP of the repository from GitHub, or by cloning it directly onto the training machine.
 
-Extract the contents of the zip file into a new directory on the training laptop.
+If you downloaded a ZIP, extract its contents into a new directory on the training laptop.
 
 ### 2. Setup the Environment
 The training laptop requires CUDA 12.8 wheels for the latest NVIDIA GPUs (like the 50-series). 
