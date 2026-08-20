@@ -2,9 +2,9 @@
 
 Two implementations behind one interface:
 
-* `DnCNN` — the learned residual extractor trained self-supervised on authentic
+* `DnCNN` - the learned residual extractor trained self-supervised on authentic
   video only (train/stage_a_videoprint.py). This is the Videoprint.
-* `srm_residual` — three fixed SRM high-pass kernels. No training, no checkpoint,
+* `srm_residual` - three fixed SRM high-pass kernels. No training, no checkpoint,
   deterministic. This is the fallback and the hour-14 kill switch: if Stage A has
   not produced a usable fingerprint, Stage B runs on SRM residuals instead and the
   system still works end to end.

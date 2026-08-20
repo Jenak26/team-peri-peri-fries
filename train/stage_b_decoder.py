@@ -1,4 +1,4 @@
-"""Stage B — tamper mask + reliability map on RGB concatenated with the Videoprint.
+"""Stage B - tamper mask + reliability map on RGB concatenated with the Videoprint.
 
 Input is six channels: the RGB frame and the Stage A fingerprint field stacked
 together. If no Stage A checkpoint exists, the fingerprint channels are filled by

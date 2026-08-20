@@ -1,16 +1,16 @@
-# Phase 1 — Likelihood-Ratio Engine Implementation Plan
+# Phase 1 - Likelihood-Ratio Engine Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development
 > (recommended) or superpowers:executing-plans to implement this plan task-by-task.
 > Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build `peri/core/forensic_lr.py` — the layer that turns raw stream scores
+**Goal:** Build `peri/core/forensic_lr.py` - the layer that turns raw stream scores
 into a log₁₀ likelihood ratio between two stated propositions, gates on the validated
 domain, excludes unstable streams with machine reason codes, fuses under a stated
 dependence discount, and returns one of exactly three outcomes.
 
 **Architecture:** Pure functions over frozen dataclasses. No I/O, no model imports, no
-global state. Densities are fitted per stream on the held-out `cal` split — Gaussian
+global state. Densities are fitted per stream on the held-out `cal` split - Gaussian
 KDE with a shared Silverman bandwidth, logistic fallback under 15 samples per class.
 The validated-domain gate is a Mahalanobis distance fitted on **feature vectors**, not
 on scores. Everything is unit-tested against synthetic scores **before any model
@@ -38,13 +38,13 @@ LR_CLIP                    = 6.0
   layer assumes this and never re-orients; wrappers negate at their own boundary.
 - **Fusion formula, verbatim:** `log10LR_total = clip(λ · Σ wₛ · median(stressₛ))`.
   The weights `wₛ` are per-stream weights defaulting to `1.0` and are **not**
-  normalised — `Σ` is a sum, and `λ = 0.5` is the dependence discount applied to that
+  normalised - `Σ` is a sum, and `λ = 0.5` is the dependence discount applied to that
   sum. This is deliberately conservative: with one usable stream it halves that
   stream's own LR. That conservatism is stated in the report, never hidden.
 - **Never claim independence** anywhere in code comments, docstrings, or output text.
 - Three outcomes only: `MANIPULATION INDICATED`, `AUTHENTICITY SUPPORTED`,
   `INCONCLUSIVE`. There is no fourth.
-- Reason codes are fixed strings from a frozen set — never free text.
+- Reason codes are fixed strings from a frozen set - never free text.
 - Determinism: all floats reaching a serialised structure go through
   `peri.core.canon.q`. No RNG in this module at all.
 - Forbidden strings (CLAUDE.md section 8) must not appear. In particular the verbal
@@ -72,14 +72,14 @@ LR_CLIP                    = 6.0
 **Interfaces:**
 - Consumes: `peri.core.canon.q`.
 - Produces, relied on by Phases 6, 7, 8, 9:
-  - `HP_TEXT: str`, `HD_TEXT: str` — the two propositions, verbatim
+  - `HP_TEXT: str`, `HD_TEXT: str` - the two propositions, verbatim
   - `LOG10LR_DECISION_THRESHOLD`, `STABILITY_IQR_MAX`, `MAHALANOBIS_QUANTILE`,
-    `DEPENDENCE_SHRINKAGE`, `LR_CLIP` — module-level floats
-  - `OUTCOME_MANIPULATION`, `OUTCOME_AUTHENTIC`, `OUTCOME_INCONCLUSIVE` — the three
+    `DEPENDENCE_SHRINKAGE`, `LR_CLIP` - module-level floats
+  - `OUTCOME_MANIPULATION`, `OUTCOME_AUTHENTIC`, `OUTCOME_INCONCLUSIVE` - the three
     outcome strings
   - `REASON_CODES: frozenset[str]`
-  - `enfsi_verbal(log10lr: float) -> str` — the strength band alone, lowercase
-  - `enfsi_sentence(log10lr: float) -> str` — band plus the named supported proposition
+  - `enfsi_verbal(log10lr: float) -> str` - the strength band alone, lowercase
+  - `enfsi_sentence(log10lr: float) -> str` - band plus the named supported proposition
 
 - [ ] **Step 1: Write the failing test**
 
@@ -163,7 +163,7 @@ def test_reason_codes_are_frozen_and_complete():
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `.venv/Scripts/python.exe -m pytest tests/test_forensic_lr_scale.py -v`
-Expected: FAIL — `ModuleNotFoundError: No module named 'peri.core.forensic_lr'`
+Expected: FAIL - `ModuleNotFoundError: No module named 'peri.core.forensic_lr'`
 
 - [ ] **Step 3: Write the implementation**
 
@@ -268,7 +268,7 @@ git commit -m "feat(lr): propositions, spec constants, ENFSI verbal scale"
 
 ---
 
-### Task 2: Density fitting — KDE with logistic fallback
+### Task 2: Density fitting - KDE with logistic fallback
 
 **Files:**
 - Modify: `peri/core/forensic_lr.py` (append)
@@ -279,7 +279,7 @@ git commit -m "feat(lr): propositions, spec constants, ENFSI verbal scale"
 - Produces:
   - `MIN_KDE_SAMPLES_PER_CLASS: int = 15`
   - `silverman_bandwidth(values: Sequence[float]) -> float`
-  - `class StreamCalibration` — frozen dataclass with fields
+  - `class StreamCalibration` - frozen dataclass with fields
     `name: str`, `method: str`, `hp_scores: tuple[float, ...]`,
     `hd_scores: tuple[float, ...]`, `bandwidth: float`, `logistic_coef: float`,
     `logistic_intercept: float`, `prior_log_odds: float`,
@@ -386,7 +386,7 @@ def test_silverman_bandwidth_is_positive_even_for_constant_input():
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `.venv/Scripts/python.exe -m pytest tests/test_forensic_lr_density.py -v`
-Expected: FAIL — `AttributeError: module 'peri.core.forensic_lr' has no attribute 'fit_stream_calibration'`
+Expected: FAIL - `AttributeError: module 'peri.core.forensic_lr' has no attribute 'fit_stream_calibration'`
 
 - [ ] **Step 3: Write the implementation**
 
@@ -625,25 +625,25 @@ git commit -m "feat(lr): KDE and logistic density fitting with prior removal"
 **Interfaces:**
 - Consumes: Tasks 1 and 2.
 - Produces:
-  - `class StreamObservation` — frozen dataclass:
+  - `class StreamObservation` - frozen dataclass:
     `name: str`, `score: float`, `feature: tuple[float, ...]`,
     `stress_scores: tuple[float, ...]`, `weight: float = 1.0`
-  - `class StreamResult` — frozen dataclass:
+  - `class StreamResult` - frozen dataclass:
     `name: str`, `baseline_log10lr: float`, `stress_log10lrs: tuple[float, ...]`,
     `median_log10lr: float`, `iqr: float`, `mahalanobis: float`,
     `mahalanobis_threshold: float`, `in_domain: bool`, `weight: float`,
     `usable: bool`, `exclusion_reason: str | None`; plus `to_dict() -> dict`
   - `mahalanobis_distance(cal: StreamCalibration, feature: Sequence[float]) -> float`
-    — returns the **distance** (square root of the squared form)
+    - returns the **distance** (square root of the squared form)
   - `evaluate_stream(cal: StreamCalibration, obs: StreamObservation) -> StreamResult`
 
 **Exclusion precedence (checked in this order, first hit wins):**
-1. `out-of-validated-domain` — the gate is asked first because an out-of-domain
+1. `out-of-validated-domain` - the gate is asked first because an out-of-domain
    exhibit's stability is not meaningful.
-2. `sign-unstable-under-degradation` — the stress LRs straddle zero **and** at least
+2. `sign-unstable-under-degradation` - the stress LRs straddle zero **and** at least
    one of them reaches `LOG10LR_DECISION_THRESHOLD` in magnitude. A stream that
    wobbles between −0.2 and +0.2 is weak, not sign-unstable.
-3. `unstable-under-degradation` — stress LR IQR exceeds `STABILITY_IQR_MAX`.
+3. `unstable-under-degradation` - stress LR IQR exceeds `STABILITY_IQR_MAX`.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -755,7 +755,7 @@ def test_result_dict_only_emits_known_reason_codes():
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `.venv/Scripts/python.exe -m pytest tests/test_forensic_lr_stream.py -v`
-Expected: FAIL — `AttributeError: module 'peri.core.forensic_lr' has no attribute 'StreamObservation'`
+Expected: FAIL - `AttributeError: module 'peri.core.forensic_lr' has no attribute 'StreamObservation'`
 
 - [ ] **Step 3: Write the implementation**
 
@@ -883,7 +883,7 @@ git commit -m "feat(lr): Mahalanobis domain gate and per-stream stability evalua
 **Interfaces:**
 - Consumes: Tasks 1–3.
 - Produces:
-  - `class Decision` — frozen dataclass:
+  - `class Decision` - frozen dataclass:
     `outcome: str`, `log10lr_total: float`, `verbal: str`, `sentence: str`,
     `reason_codes: tuple[str, ...]`, `streams: tuple[StreamResult, ...]`,
     `usable_stream_names: tuple[str, ...]`, `shrinkage: float`;
@@ -1031,7 +1031,7 @@ def test_decision_dict_is_json_ready():
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `.venv/Scripts/python.exe -m pytest tests/test_forensic_lr_decision.py -v`
-Expected: FAIL — `AttributeError: module 'peri.core.forensic_lr' has no attribute 'fuse_and_decide'`
+Expected: FAIL - `AttributeError: module 'peri.core.forensic_lr' has no attribute 'fuse_and_decide'`
 
 - [ ] **Step 3: Write the implementation**
 
@@ -1202,7 +1202,7 @@ def test_selftest_is_deterministic_across_runs():
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `.venv/Scripts/python.exe -m pytest tests/test_forensic_lr_acceptance.py -v`
-Expected: FAIL — `ModuleNotFoundError: No module named 'tools.selftest_lr'`
+Expected: FAIL - `ModuleNotFoundError: No module named 'tools.selftest_lr'`
 
 - [ ] **Step 3: Write the implementation**
 

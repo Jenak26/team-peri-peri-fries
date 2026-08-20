@@ -1,4 +1,4 @@
-"""Stage A — self-supervised acquisition fingerprint (the Videoprint).
+"""Stage A - self-supervised acquisition fingerprint (the Videoprint).
 
 Trained on UNLABELLED AUTHENTIC VIDEO ONLY. It never sees a manipulated frame.
 That is the point: the fingerprint learns what a consistent acquisition pipeline

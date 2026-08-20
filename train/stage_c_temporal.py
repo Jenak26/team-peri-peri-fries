@@ -1,4 +1,4 @@
-"""Stage C — temporal transformer over cached per-frame tokens.
+"""Stage C - temporal transformer over cached per-frame tokens.
 
 Two steps, both driven from this file:
 

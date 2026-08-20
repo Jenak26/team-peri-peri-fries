@@ -1,18 +1,18 @@
-# Phase 2 — Custody Spine Implementation Plan
+# Phase 2 - Custody Spine Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development
 > (recommended) or superpowers:executing-plans to implement this plan task-by-task.
 > Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build L0 and L6 — receive an exhibit, hash it, seal it read-only, probe it,
+**Goal:** Build L0 and L6 - receive an exhibit, hash it, seal it read-only, probe it,
 make a working copy, and record every one of those acts in an append-only SHA-256 hash
 chain that a third party can verify offline.
 
 **Architecture:** Three modules. `ledger.py` is a pure append-only chain over a JSONL
 file with no knowledge of what an exhibit is. `intake.py` performs the six custody acts
 and calls the ledger after each one. `manifest.py` snapshots everything that would have
-to be identical for a replay to be meaningful — model checksums, config, seeds, library
-versions — and hashes that snapshot.
+to be identical for a replay to be meaningful - model checksums, config, seeds, library
+versions - and hashes that snapshot.
 
 **The working copy is a byte-identical copy of the original.** Not a transcode. A
 transcode would make the working-copy hash depend on the muxer's clock and would
@@ -50,7 +50,7 @@ Roadmap: `docs/superpowers/plans/2026-08-20-ppf-00-ROADMAP.md`.
 **Interfaces:**
 - Consumes: ffmpeg on PATH.
 - Produces: `make_demo_clip(path, seconds=4, fps=25, width=320, height=240) -> Path`
-  — a deterministic H.264 MP4 built from ffmpeg's `testsrc2` source with `-bitexact`
+  - a deterministic H.264 MP4 built from ffmpeg's `testsrc2` source with `-bitexact`
   so two invocations produce byte-identical files. Used as the fixture exhibit by
   Phases 2, 3, 4, 5, 7, 9, 10.
 
@@ -91,7 +91,7 @@ def test_clip_is_readable_by_opencv(tmp_path):
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `.venv/Scripts/python.exe -m pytest tests/test_demo_clip.py -v`
-Expected: FAIL — `ModuleNotFoundError: No module named 'tools.make_demo_clip'`
+Expected: FAIL - `ModuleNotFoundError: No module named 'tools.make_demo_clip'`
 
 - [ ] **Step 3: Write the implementation**
 
@@ -193,17 +193,17 @@ git commit -m "feat(tools): deterministic demo clip fixture generator"
 **Interfaces:**
 - Consumes: `peri.core.canon.{hash_obj, canonical_json, utc_now_iso}`.
 - Produces:
-  - `GENESIS_HASH: str` — 64 zeros
-  - `class LedgerEvent` — frozen dataclass:
+  - `GENESIS_HASH: str` - 64 zeros
+  - `class LedgerEvent` - frozen dataclass:
     `seq: int`, `ts_utc: str`, `event: str`, `evidence_id: str`, `payload: dict`,
     `prev_hash: str`, `hash: str`; plus `to_dict()`
   - `compute_event_hash(seq, ts_utc, event, evidence_id, payload, prev_hash) -> str`
-  - `class Ledger` — constructor `Ledger(path: str | Path)`:
+  - `class Ledger` - constructor `Ledger(path: str | Path)`:
     - `append(event: str, evidence_id: str, payload: dict) -> LedgerEvent`
     - `events() -> list[LedgerEvent]`
     - `head_hash() -> str`
     - `__len__() -> int`
-  - `class LedgerVerification` — frozen dataclass:
+  - `class LedgerVerification` - frozen dataclass:
     `ok: bool`, `count: int`, `broken_at: int | None`, `reason: str | None`
   - `verify_ledger(path: str | Path) -> LedgerVerification`
 
@@ -322,7 +322,7 @@ def test_verify_of_a_missing_file_is_not_ok(tmp_path):
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `.venv/Scripts/python.exe -m pytest tests/test_ledger.py -v`
-Expected: FAIL — `ModuleNotFoundError: No module named 'peri.core.ledger'`
+Expected: FAIL - `ModuleNotFoundError: No module named 'peri.core.ledger'`
 
 - [ ] **Step 3: Write the implementation**
 
@@ -487,7 +487,7 @@ def verify_ledger(path: str | Path) -> LedgerVerification:
 
 **Implementer note:** the `verify_ledger` return signature is
 `LedgerVerification(ok, count, broken_at, reason)`. Write every return with keyword
-arguments to avoid transposing `count` and `broken_at` — the tests check both.
+arguments to avoid transposing `count` and `broken_at` - the tests check both.
 Rewrite the three failure returns above as:
 
 ```python
@@ -535,13 +535,13 @@ git commit -m "feat(ledger): append-only SHA-256 hash chain with offline verific
 **Interfaces:**
 - Consumes: `canon`, `errors.IntakeError`, `ledger.Ledger`.
 - Produces:
-  - `INTAKE_EVENTS: tuple[str, ...]` — the six event names in order
-  - `class ExhibitRecord` — frozen dataclass:
+  - `INTAKE_EVENTS: tuple[str, ...]` - the six event names in order
+  - `class ExhibitRecord` - frozen dataclass:
     `evidence_id: str`, `evidence_dir: Path`, `original_path: Path`,
     `working_path: Path`, `original_sha256: str`, `working_sha256: str`,
     `original_filename: str`, `size_bytes: int`, `container: dict`,
     `read_only: bool`, `ledger_path: Path`; plus `to_dict()`
-  - `probe_container(path) -> dict` — ffprobe JSON reduced to
+  - `probe_container(path) -> dict` - ffprobe JSON reduced to
     `{format_name, format_long_name, duration_s, bit_rate, size_bytes,
       video: {codec, width, height, fps, nb_frames, pix_fmt}, audio: {...} | None,
       tags: {...}, stream_count}`
@@ -667,7 +667,7 @@ def test_record_dict_carries_both_hashes_for_the_report(tmp_path, clip):
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `.venv/Scripts/python.exe -m pytest tests/test_intake.py -v`
-Expected: FAIL — `ModuleNotFoundError: No module named 'peri.core.intake'`
+Expected: FAIL - `ModuleNotFoundError: No module named 'peri.core.intake'`
 
 - [ ] **Step 3: Write the implementation**
 
@@ -934,7 +934,7 @@ Expected: PASS, 13 passed.
 Known Windows wrinkle: `test_writing_to_the_original_raises` fails if the test process
 runs elevated, because Administrators bypass the read-only attribute. Run the suite
 from a non-elevated shell. If elevation is unavoidable, additionally deny write via
-`icacls <path> /deny "%USERNAME%":(W)` inside `make_read_only` — but prefer the
+`icacls <path> /deny "%USERNAME%":(W)` inside `make_read_only` - but prefer the
 non-elevated shell; the extra ACL call is one more thing to explain on stage.
 
 - [ ] **Step 5: Commit**
@@ -956,13 +956,13 @@ git commit -m "feat(intake): hash, quarantine, probe, and copy with six ledger e
 - Consumes: `canon`, `intake.ExhibitRecord`.
 - Produces:
   - `MANIFEST_SCHEMA: str = "peri.manifest/1"`
-  - `artifact_checksums(artifacts_dir="artifacts") -> dict[str, str]` — sorted mapping
+  - `artifact_checksums(artifacts_dir="artifacts") -> dict[str, str]` - sorted mapping
     of every `*.pt` and `*.json` filename to its SHA-256, `{}` if the directory is
     absent
   - `build_manifest(record: ExhibitRecord, config: dict, artifacts_dir="artifacts")
-     -> dict` — keys: `schema`, `evidence_id`, `exhibit`, `config`, `seed`,
+     -> dict` - keys: `schema`, `evidence_id`, `exhibit`, `config`, `seed`,
     `artifacts`, `environment`, `manifest_hash`
-  - `write_manifest(manifest: dict, evidence_dir: Path) -> Path` — writes
+  - `write_manifest(manifest: dict, evidence_dir: Path) -> Path` - writes
     `manifest.json`, returns the path
 
 - [ ] **Step 1: Write the failing test**
@@ -1046,7 +1046,7 @@ def test_manifest_is_written_and_reloadable(record):
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `.venv/Scripts/python.exe -m pytest tests/test_manifest.py -v`
-Expected: FAIL — `ModuleNotFoundError: No module named 'peri.core.manifest'`
+Expected: FAIL - `ModuleNotFoundError: No module named 'peri.core.manifest'`
 
 - [ ] **Step 3: Write the implementation**
 
@@ -1180,7 +1180,7 @@ def test_end_to_end_custody_meets_the_phase_two_criteria(tmp_path):
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `.venv/Scripts/python.exe -m pytest tests/test_custody_acceptance.py -v`
-Expected: FAIL — `ModuleNotFoundError: No module named 'tools.custody_demo'`
+Expected: FAIL - `ModuleNotFoundError: No module named 'tools.custody_demo'`
 
 - [ ] **Step 3: Write the implementation**
 

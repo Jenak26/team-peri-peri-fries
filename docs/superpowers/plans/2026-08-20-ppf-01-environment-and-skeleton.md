@@ -1,11 +1,11 @@
-# Phase 0 — Environment & Skeleton Implementation Plan
+# Phase 0 - Environment & Skeleton Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development
 > (recommended) or superpowers:executing-plans to implement this plan task-by-task.
 > Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Stand up the repo, the virtualenv, the pinned dependency record, and the
-determinism helpers every later phase imports — so no later task has to stop and
+determinism helpers every later phase imports - so no later task has to stop and
 invent a JSON convention.
 
 **Architecture:** A Python 3.12 venv with CPU torch. A `peri` package with the file
@@ -160,7 +160,7 @@ Run:
 Expected: prints a torch version and `cuda False`. `cuda False` is correct on this
 machine and is not an error.
 
-If `c2pa-python` fails to build, do not fight it — remove it from
+If `c2pa-python` fails to build, do not fight it - remove it from
 `requirements-cpu.txt`, and Phase 3 will report `c2pa: unavailable` through its
 already-planned fallback path. Note the removal in `artifacts/environment.json`
 under `deviations`.
@@ -184,16 +184,16 @@ git commit -m "chore: repo skeleton, venv requirements, pytest config"
 - Consumes: nothing.
 - Produces, relied on by every later phase:
   - `PERI_SEED: int = 20260820`
-  - `q(x: float) -> float` — quantise a float to 6 decimal places
-  - `qdeep(obj: Any) -> Any` — recursively apply `q` to every float in a nested
+  - `q(x: float) -> float` - quantise a float to 6 decimal places
+  - `qdeep(obj: Any) -> Any` - recursively apply `q` to every float in a nested
     structure of dict / list / tuple / float / int / str / bool / None
-  - `canonical_json(obj: Any) -> str` — sorted-key, tight-separator JSON of `qdeep(obj)`
+  - `canonical_json(obj: Any) -> str` - sorted-key, tight-separator JSON of `qdeep(obj)`
   - `sha256_hex(data: bytes) -> str`
-  - `hash_obj(obj: Any) -> str` — `sha256_hex(canonical_json(obj).encode("utf-8"))`
+  - `hash_obj(obj: Any) -> str` - `sha256_hex(canonical_json(obj).encode("utf-8"))`
   - `sha256_file(path: str | os.PathLike, chunk: int = 1 << 20) -> str`
-  - `utc_now_iso() -> str` — `2026-08-20T11:09:33Z` form, second resolution
-  - `ist_now_iso() -> str` — same instant, `+05:30` offset
-  - `seed_everything(seed: int = PERI_SEED) -> None` — seeds `random`, `numpy`,
+  - `utc_now_iso() -> str` - `2026-08-20T11:09:33Z` form, second resolution
+  - `ist_now_iso() -> str` - same instant, `+05:30` offset
+  - `seed_everything(seed: int = PERI_SEED) -> None` - seeds `random`, `numpy`,
     and `torch` if torch is importable
 
 - [ ] **Step 1: Write the failing test**
@@ -273,7 +273,7 @@ def test_seed_everything_makes_random_reproducible():
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `.venv/Scripts/python.exe -m pytest tests/test_canon.py -v`
-Expected: FAIL — `ModuleNotFoundError: No module named 'peri.core.canon'`
+Expected: FAIL - `ModuleNotFoundError: No module named 'peri.core.canon'`
 
 - [ ] **Step 3: Write the implementation**
 
@@ -466,14 +466,14 @@ def test_record_hash_is_stable_across_two_builds():
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `.venv/Scripts/python.exe -m pytest tests/test_environment_record.py -v`
-Expected: FAIL — `ModuleNotFoundError: No module named 'tools.write_environment'`
+Expected: FAIL - `ModuleNotFoundError: No module named 'tools.write_environment'`
 
 - [ ] **Step 3: Write the implementation**
 
 Create `tools/write_environment.py`:
 
 ```python
-"""Write artifacts/environment.json — the pinned environment the report cites.
+"""Write artifacts/environment.json - the pinned environment the report cites.
 
 Generated, never hand-edited: a hand-edited record drifts from the interpreter
 that actually produced the findings, and the Methods page would then be false.
@@ -595,7 +595,7 @@ cat artifacts/environment.json
 Expected: a JSON file where `packages.torch` is a real version, `packages.numpy` is
 a real version, and `binaries.ffmpeg` starts with `ffmpeg version 9.0-full_build`.
 If `c2pa-python` reads `not-installed`, that is the Task 1 Step 7 fallback and is
-acceptable — confirm Phase 3 knows.
+acceptable - confirm Phase 3 knows.
 
 - [ ] **Step 6: Commit**
 
@@ -615,7 +615,7 @@ git commit -m "feat(tools): generated environment record with declared deviation
 **Interfaces:**
 - Consumes: `peri.core.canon`.
 - Produces: `class PeriError(Exception)`, `class IntakeError(PeriError)`,
-  `class CalibrationError(PeriError)`, `class ExaminationError(PeriError)` —
+  `class CalibrationError(PeriError)`, `class ExaminationError(PeriError)` -
   the exception hierarchy every later phase raises from, so the API can map one base
   class to an HTTP 4xx/5xx and nothing leaks a raw traceback into a findings file.
 
@@ -679,7 +679,7 @@ def test_torch_imports_without_a_cuda_device():
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `.venv/Scripts/python.exe -m pytest tests/test_phase0_gate.py -v`
-Expected: FAIL — `ModuleNotFoundError: No module named 'peri.core.errors'`
+Expected: FAIL - `ModuleNotFoundError: No module named 'peri.core.errors'`
 
 - [ ] **Step 3: Write the implementation**
 
@@ -714,7 +714,7 @@ class ExaminationError(PeriError):
 - [ ] **Step 4: Run the whole suite**
 
 Run: `.venv/Scripts/python.exe -m pytest -v`
-Expected: PASS — all tests from Tasks 2, 3, 4 green (20 passed).
+Expected: PASS - all tests from Tasks 2, 3, 4 green (20 passed).
 
 - [ ] **Step 5: Commit**
 

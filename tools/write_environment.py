@@ -1,4 +1,4 @@
-"""Write artifacts/environment.json — the pinned environment the report cites.
+"""Write artifacts/environment.json - the pinned environment the report cites.
 
 Generated, never hand-edited: a hand-edited record drifts from the interpreter
 that actually produced the findings, and the Methods page would then be false.

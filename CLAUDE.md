@@ -1,4 +1,4 @@
-# PRAMĀṆA v2 — Judicial Digital Evidence Authentication Engine
+# Team Peri Peri Fries v2 - Judicial Digital Evidence Authentication Engine
 
 **Authoritative context for this repository. Read fully before writing code. Do not redesign. Do not add components not listed here.**
 
@@ -10,14 +10,14 @@ Not a deepfake detector. A **forensic examination protocol engine**.
 
 Every existing tool outputs `P(fake)=0.97`. A court cannot weigh that: no stated propositions, no declared population, no validated domain, no uncertainty, no reproducibility.
 
-PRAMĀṆA produces, for one exhibit:
+Team Peri Peri Fries produces, for one exhibit:
 
 1. A **log₁₀ likelihood ratio** between two explicitly stated propositions
 2. A **pixel-level tamper mask + reliability map + tamper timeline** from a trained acquisition-consistency network
-3. An **Evidence Fragility Index** — the adversarially-found minimum laundering strength at which our own verdict flips
-4. A **validated-domain check** (Mahalanobis) — is this exhibit inside what we calibrated on?
-5. A **mandatory abstention path** — `INCONCLUSIVE` with machine-generated reason codes
-6. A **tamper-evident, replayable examination record** — a second run yields a byte-identical findings hash
+3. An **Evidence Fragility Index** - the adversarially-found minimum laundering strength at which our own verdict flips
+4. A **validated-domain check** (Mahalanobis) - is this exhibit inside what we calibrated on?
+5. A **mandatory abstention path** - `INCONCLUSIVE` with machine-generated reason codes
+6. A **tamper-evident, replayable examination record** - a second run yields a byte-identical findings hash
 7. A **court-oriented PDF** structured against India's Section 63(4) BSA Part-B expert declaration
 
 Propositions, verbatim in code and report:
@@ -25,7 +25,7 @@ Propositions, verbatim in code and report:
 - **Hp:** the exhibit is an unmanipulated recording of a real event
 - **Hd:** the exhibit is synthetically generated or materially manipulated in the facial region
 
-**Novelty claim — never overstate it in code, UI or report:**
+**Novelty claim - never overstate it in code, UI or report:**
 > We extend learned acquisition-fingerprint forgery localization (Noiseprint/TruFor, CVPR 2023) from images to video via codec-trace-conditioned self-supervised fingerprint learning and temporal aggregation, and embed it in a judicial examination protocol reporting an ENFSI likelihood ratio, a per-exhibit Evidence Fragility Index, a mandatory abstention path, and a replayable hash-sealed record structured to Section 63(4) BSA. The fingerprint paradigm is not ours; its video formulation, its adversarial fragility reporting, and its statutory packaging are.
 
 Prior art we consume and MUST credit in the report's Methods page: Noiseprint (2019), TruFor (CVPR 2023), DiCoME (ICML 2026), DTRA (ICMR 2026), GenD (WACV 2026), NTIRE 2026 Robust Deepfake Detection Challenge, C2PA/`c2pa-python`.
@@ -40,7 +40,7 @@ Prior art we consume and MUST credit in the report's Methods page: Noiseprint (2
 - No network at demo time.
 - Prefer deterministic Python over ML wherever a rule will do.
 
-### Environment — do this first
+### Environment - do this first
 
 50-series needs CUDA 12.8 wheels or CUDA will not initialise.
 
@@ -54,7 +54,7 @@ pip install open_clip_torch transformers timm opencv-python-headless numpy scipy
 sudo apt-get install -y ffmpeg
 ```
 
-Pin all versions into `artifacts/environment.json` — it goes in the report.
+Pin all versions into `artifacts/environment.json` - it goes in the report.
 
 ---
 
@@ -79,7 +79,7 @@ L8 REPLAY     Re-run from the examination manifest → identical findings hash
 ### File tree
 
 ```
-pramana/
+team-peri-peri-fries/
 ├─ core/
 │  ├─ intake.py        # hash, quarantine, ffprobe, EXIF, working copy
 │  ├─ provenance.py    # S4: c2pa read + metadata contradiction rules
@@ -136,17 +136,17 @@ Two tracks run in parallel. GPU track starts at hour 2 and runs unattended; CPU 
 | Stage | Architecture | Data | Trainable | VRAM | Time |
 |---|---|---|---|---|---|
 | **A Videoprint** | DnCNN/U-Net residual extractor, 17 layers, 64ch. Contrastive: patches from same video+codec+GOP position pull together; different source pushes apart | **Unlabeled authentic video only.** ~2000 clips, ~2M 64×64 patch pairs | ~18M | 12–16GB @ batch 256 | 6–8h |
-| **B Decoder** | SegFormer-B2 encoder on RGB ⊕ Videoprint; dual decoder — tamper mask + TCP-style confidence map | FF++ c23 **with ground-truth masks**, 512² crops, batch 12 | ~28M | 14GB | 3–4h |
+| **B Decoder** | SegFormer-B2 encoder on RGB ⊕ Videoprint; dual decoder - tamper mask + TCP-style confidence map | FF++ c23 **with ground-truth masks**, 512² crops, batch 12 | ~28M | 14GB | 3–4h |
 | **C Temporal** | 4-layer transformer, d=256, 8 heads, over per-frame (anomaly, confidence, fingerprint-stat) tokens | Cached Stage-B outputs | ~3M | 3GB | 25m |
 | **D Calibrate** | KDE/logistic LR densities + Mahalanobis stats | held-out `cal` split | 0 | CPU | 10m |
 
 Common: AdamW, cosine schedule. Stage A lr 1e-4; Stage B lr 6e-5 encoder / 6e-4 decoder. `torch.autocast('cuda', torch.bfloat16)`, no GradScaler. Fixed seeds everywhere.
 
-**Splits: by identity AND by generator, never random.** Hold one generator out entirely — that is the generalisation claim. The `cal` split is sacred: never trained on; it exists solely to fit LR densities and Mahalanobis stats.
+**Splits: by identity AND by generator, never random.** Hold one generator out entirely - that is the generalisation claim. The `cal` split is sacred: never trained on; it exists solely to fit LR densities and Mahalanobis stats.
 
 **Report AUROC on the unseen generator AND ECE.** A well-calibrated 0.85 beats an overconfident 0.97; say so on stage.
 
-Dataset: FF++ c23 with masks for Stage B (worth the EULA wait — Stage A does not need it). Fallback for B: any masked manipulation corpus, or self-built splices with known masks, labelled honestly as "internal validation corpus, not a public benchmark." Hard stop at 45 minutes of acquisition.
+Dataset: FF++ c23 with masks for Stage B (worth the EULA wait - Stage A does not need it). Fallback for B: any masked manipulation corpus, or self-built splices with known masks, labelled honestly as "internal validation corpus, not a public benchmark." Hard stop at 45 minutes of acquisition.
 
 ---
 
@@ -154,7 +154,7 @@ Dataset: FF++ c23 with masks for Stage B (worth the EULA wait — Stage A does n
 
 Highest-risk component. Unit-test against synthetic scores **before any model exists**.
 
-Fit `f(score|Hp)` and `f(score|Hd)` per stream on the held-out `cal` split — Gaussian KDE with shared Silverman bandwidth; logistic fallback under 15 samples per class (subtract the fitted prior log-odds to recover an LR from a posterior). Fit Mahalanobis stats on the stream's **feature vectors**, not its scores.
+Fit `f(score|Hp)` and `f(score|Hd)` per stream on the held-out `cal` split - Gaussian KDE with shared Silverman bandwidth; logistic fallback under 15 samples per class (subtract the fitted prior log-odds to recover an LR from a posterior). Fit Mahalanobis stats on the stream's **feature vectors**, not its scores.
 
 ```
 LOG10LR_DECISION_THRESHOLD = 1.0
@@ -164,7 +164,7 @@ DEPENDENCE_SHRINKAGE       = 0.5
 LR_CLIP                    = 6.0
 ```
 
-Fusion: `log10LR_total = clip(λ · Σ wₛ · median(stressₛ))`. Streams are correlated — never claim independence; shrinkage is stated conservatism and must be justified in the report.
+Fusion: `log10LR_total = clip(λ · Σ wₛ · median(stressₛ))`. Streams are correlated - never claim independence; shrinkage is stated conservatism and must be justified in the report.
 
 Stream exclusion (reason code recorded): `out-of-validated-domain` · `sign-unstable-under-degradation` · `unstable-under-degradation`.
 
@@ -182,13 +182,13 @@ Binary-search the minimum laundering strength at which the verdict flips, on thr
 
 Bands: LOW (survives heavy laundering) · MODERATE · HIGH (flips under ordinary social-media recompression → force `INCONCLUSIVE`).
 
-**HARD RULE:** training augmentations and fragility-search transforms must be **disjoint** — different families, different parameter ranges. Assert it in code and list both sets in the report. If they overlap, the robustness claim is circular and gets destroyed in Q&A.
+**HARD RULE:** training augmentations and fragility-search transforms must be **disjoint** - different families, different parameter ranges. Assert it in code and list both sets in the report. If they overlap, the robustness claim is circular and gets destroyed in Q&A.
 
 ---
 
 ## 7. REPORT (`core/report.py`)
 
-Nine pages: (1) examination summary — IDs, examiner, IST+UTC timestamp, software and model versions with SHA-256, calibration corpus ID; (2) exhibit — filename, type, size, **SHA-256 of original**, working-copy hash, stated acquisition source, container/codec/duration/fps/resolution, EXIF, C2PA status; (3) methods — stages, frozen vs trained params, calibration corpus composition, **declared validated domain**, fragility axes with parameters, library versions, prior-art credits; (4) findings — both propositions verbatim, per-stream score/log₁₀LR/fragility/in-domain, fused log₁₀LR, verbal equivalent, three-way outcome, reason codes; (5) localised findings — timestamp, frame index, region bbox, anomaly type, contributing streams, frame log₁₀LR, thumbnail, reliability; (6) integrity and chain of custody — full ledger table, statement that the original was never written to; (7) reproducibility — manifest hash, model checksums, config, seeds, hardware, replay command; (8) limitations; (9) Section 63(4) Part-B draft input sheet, watermarked **DRAFT — REQUIRES EXPERT REVIEW AND SIGNATURE**.
+Nine pages: (1) examination summary - IDs, examiner, IST+UTC timestamp, software and model versions with SHA-256, calibration corpus ID; (2) exhibit - filename, type, size, **SHA-256 of original**, working-copy hash, stated acquisition source, container/codec/duration/fps/resolution, EXIF, C2PA status; (3) methods - stages, frozen vs trained params, calibration corpus composition, **declared validated domain**, fragility axes with parameters, library versions, prior-art credits; (4) findings - both propositions verbatim, per-stream score/log₁₀LR/fragility/in-domain, fused log₁₀LR, verbal equivalent, three-way outcome, reason codes; (5) localised findings - timestamp, frame index, region bbox, anomaly type, contributing streams, frame log₁₀LR, thumbnail, reliability; (6) integrity and chain of custody - full ledger table, statement that the original was never written to; (7) reproducibility - manifest hash, model checksums, config, seeds, hardware, replay command; (8) limitations; (9) Section 63(4) Part-B draft input sheet, watermarked **DRAFT - REQUIRES EXPERT REVIEW AND SIGNATURE**.
 
 Page 8, verbatim, non-negotiable:
 
@@ -196,11 +196,11 @@ Page 8, verbatim, non-negotiable:
 
 ---
 
-## 8. LEGAL LANGUAGE RULES — ENFORCED BY CI GREP
+## 8. LEGAL LANGUAGE RULES - ENFORCED BY CI GREP
 
 **Forbidden strings anywhere in this repo:** `court-admissible`, `legally valid`, `legally admissible`, `certified evidence`, `meets Section 63`, `proves`, `guaranteed authentic`.
 
-Required framing: the system assists forensic examination. It does not replace judicial determination of admissibility or weight. Section 63(4) BSA requires a certificate signed by a person in charge of the device **and an expert** — we generate inputs for that human expert; we sign nothing.
+Required framing: the system assists forensic examination. It does not replace judicial determination of admissibility or weight. Section 63(4) BSA requires a certificate signed by a person in charge of the device **and an expert** - we generate inputs for that human expert; we sign nothing.
 
 C2PA precedence: C2PA verifies that provenance claims have not been tampered with, **not** that they are truthful. Where forensic findings contradict a manifest, forensic findings take precedence and both are reported.
 
@@ -211,9 +211,9 @@ C2PA precedence: C2PA verifies that provenance claims have not been tampered wit
 Single file, Tailwind CDN, legible to a judge with zero ML background. Vertical order:
 
 1. Drop zone → evidence ID badge + SHA-256 typing out
-2. **RGB ⇄ Videoprint toggle** — the manipulated region is visibly a different texture. *This is the demo shot.*
-3. Tamper timeline — per-frame anomaly with reliability shading; greyed where the model is not confident; click → pixel mask overlay
-4. **Fragility panel** — live self-attack progress, then the critical thresholds and the band
+2. **RGB ⇄ Videoprint toggle** - the manipulated region is visibly a different texture. *This is the demo shot.*
+3. Tamper timeline - per-frame anomaly with reliability shading; greyed where the model is not confident; click → pixel mask overlay
+4. **Fragility panel** - live self-attack progress, then the critical thresholds and the band
 5. log₁₀LR dial + ENFSI verbal + outcome; `INCONCLUSIVE` in amber with the reason in plain English
 6. Ledger table, live-appending
 7. `Generate Report` and `Verify Replay`; replay success shows two identical hashes side by side in green
@@ -224,7 +224,7 @@ Never render a percentage where an LR belongs.
 
 ## 10. DO NOT BUILD
 
-Blockchain/IPFS (hash chain gives tamper-evidence; the lab is the trust anchor — reject on the merits and say so). Beauty/attractiveness scoring (encodes rater-population bias in skin tone, gender, age; in a judicial instrument that is the headline, not a caveat — the real signal is already captured by Videoprint). User accounts. Audio or lip-sync stream. Training a generator. Multi-file case management. Docker. Cloud deploy. **LLM-written explanations** — templated sentences bound to numeric findings only. SOTA benchmark chasing. Mobile responsiveness.
+Blockchain/IPFS (hash chain gives tamper-evidence; the lab is the trust anchor - reject on the merits and say so). Beauty/attractiveness scoring (encodes rater-population bias in skin tone, gender, age; in a judicial instrument that is the headline, not a caveat - the real signal is already captured by Videoprint). User accounts. Audio or lip-sync stream. Training a generator. Multi-file case management. Docker. Cloud deploy. **LLM-written explanations** - templated sentences bound to numeric findings only. SOTA benchmark chasing. Mobile responsiveness.
 
 ---
 
@@ -233,5 +233,5 @@ Blockchain/IPFS (hash chain gives tamper-evidence; the lab is the trust anchor �
 - Make judgment calls; do not stop to ask which option I prefer. State assumptions inline and continue.
 - Complete working files, not fragments. Copy-paste-ready terminal commands.
 - Run the acceptance test after every step and report actual output, not intent.
-- If 30+ minutes behind, cut from §10's neighbours and say what you cut. Never silently degrade the abstention path, the ledger, the fragility index, or the report's limitations page — those are the product.
+- If 30+ minutes behind, cut from §10's neighbours and say what you cut. Never silently degrade the abstention path, the ledger, the fragility index, or the report's limitations page - those are the product.
 - Determinism is a feature: fixed seeds, sorted JSON keys, stable float formatting. The replay hash must match byte-for-byte.

@@ -1,10 +1,10 @@
-# Phase 3 — Provenance Stream (S4) Implementation Plan
+# Phase 3 - Provenance Stream (S4) Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development
 > (recommended) or superpowers:executing-plans to implement this plan task-by-task.
 > Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build `peri/core/provenance.py` — a **rule-based, zero-ML** stream that
+**Goal:** Build `peri/core/provenance.py` - a **rule-based, zero-ML** stream that
 reads a C2PA manifest if one exists, extracts structured container facts, applies a
 fixed set of named metadata-contradiction rules, and emits a score, a feature vector,
 and stress replicas in the shape the LR layer already expects.
@@ -13,10 +13,10 @@ and stress replicas in the shape the LR layer already expects.
 `probe_container` already produces, plus an optional C2PA read. Each rule is a frozen
 dataclass with an ID, a plain-English statement, a weight, and a pure predicate. The
 score is the weighted fraction of triggered rules. Nothing here learns anything, so
-nothing here can fail because training failed — which is exactly why CLAUDE.md
+nothing here can fail because training failed - which is exactly why CLAUDE.md
 requires it to work when everything else does not.
 
-**Tech Stack:** Python 3.12, `c2pa` (optional — degrades to `unavailable`), stdlib.
+**Tech Stack:** Python 3.12, `c2pa` (optional - degrades to `unavailable`), stdlib.
 No torch, no network, no model files.
 
 **Spec:** `CLAUDE.md` sections 2 (S4), 3 (CPU-track step 3), 8 (C2PA precedence).
@@ -35,7 +35,7 @@ Depends on: Phase 2 (`probe_container`).
 - Score orientation: **higher means Hd**. The provenance score is a weighted fraction
   in `[0.0, 1.0]`; more triggered contradiction rules means a higher score.
 - Rule IDs are stable strings. Renaming one after Phase 6 calibration invalidates the
-  calibration — treat IDs as an on-disk format.
+  calibration - treat IDs as an on-disk format.
 - All floats through `peri.core.canon.q`. No RNG.
 - Forbidden strings (CLAUDE.md section 8) must not appear. A rule statement says
   *"is inconsistent with"*, never *"proves"*.
@@ -57,7 +57,7 @@ Depends on: Phase 2 (`probe_container`).
 
 `score = sum(weight of triggered rules) / sum(all evaluable weights)`. A rule that
 cannot be evaluated (for example `PRV-08` when no manifest exists) is excluded from
-**both** the numerator and the denominator, and is recorded as `not-evaluated` — it is
+**both** the numerator and the denominator, and is recorded as `not-evaluated` - it is
 never silently counted as passing.
 
 ---
@@ -72,7 +72,7 @@ never silently counted as passing.
 - Consumes: `peri.core.canon.q`.
 - Produces:
   - `C2PA_STATUSES: tuple[str, ...] = ("present", "absent", "invalid", "unavailable")`
-  - `read_c2pa(path: str | Path) -> dict` — returns
+  - `read_c2pa(path: str | Path) -> dict` - returns
     `{"status", "library_available", "claim_generator", "assertions",
       "validation_errors", "raw_excerpt"}`. Never raises: an exhibit with no manifest
     is the normal case, and a missing library is a stated limitation, not a crash.
@@ -123,7 +123,7 @@ def test_result_always_carries_every_key(tmp_path):
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `.venv/Scripts/python.exe -m pytest tests/test_provenance_c2pa.py -v`
-Expected: FAIL — `ModuleNotFoundError: No module named 'peri.core.provenance'`
+Expected: FAIL - `ModuleNotFoundError: No module named 'peri.core.provenance'`
 
 - [ ] **Step 3: Write the implementation**
 
@@ -228,7 +228,7 @@ def read_c2pa(path: str | Path) -> dict:
 
 Run: `.venv/Scripts/python.exe -m pytest tests/test_provenance_c2pa.py -v`
 Expected: PASS, 5 passed. `status` will be `unavailable` if `c2pa-python` did not
-install in Phase 0 — that is a passing state, not a failure.
+install in Phase 0 - that is a passing state, not a failure.
 
 - [ ] **Step 5: Commit**
 
@@ -248,17 +248,17 @@ git commit -m "feat(provenance): C2PA reader with unavailable/absent/invalid fal
 **Interfaces:**
 - Consumes: Task 1; Phase 2 `probe_container` output shape.
 - Produces:
-  - `class Rule` — frozen dataclass: `rule_id: str`, `statement: str`,
+  - `class Rule` - frozen dataclass: `rule_id: str`, `statement: str`,
     `weight: float`, `evaluable: Callable[[dict], bool]`,
     `triggered: Callable[[dict], bool]`
-  - `RULES: tuple[Rule, ...]` — the ten rules, in ID order
-  - `SOFTWARE_ENCODERS: frozenset[str]` — lowercase substrings that identify a
+  - `RULES: tuple[Rule, ...]` - the ten rules, in ID order
+  - `SOFTWARE_ENCODERS: frozenset[str]` - lowercase substrings that identify a
     rendering or editing tool: `{"lavf", "ffmpeg", "handbrake", "adobe", "premiere",
     "after effects", "blender", "moviepy", "obs", "avidemux", "shotcut", "davinci",
     "vegas", "x264", "x265", "mencoder", "imovie", "kdenlive"}`
-  - `DEVICE_BRANDS: frozenset[str]` — major brands a capture device writes:
+  - `DEVICE_BRANDS: frozenset[str]` - major brands a capture device writes:
     `{"qt", "3gp4", "3gp5", "mp41", "avc1", "heic", "mif1", "msnv"}`
-  - `evaluate_rules(facts: dict) -> list[dict]` — one dict per rule with keys
+  - `evaluate_rules(facts: dict) -> list[dict]` - one dict per rule with keys
     `rule_id`, `statement`, `weight`, `evaluated`, `triggered`
 
 **`facts` shape** (built in Task 3, but the rules are written against it now):
@@ -464,7 +464,7 @@ def test_every_statement_avoids_overclaiming_language():
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `.venv/Scripts/python.exe -m pytest tests/test_provenance_rules.py -v`
-Expected: FAIL — `AttributeError: module 'peri.core.provenance' has no attribute 'RULES'`
+Expected: FAIL - `AttributeError: module 'peri.core.provenance' has no attribute 'RULES'`
 
 - [ ] **Step 3: Write the implementation**
 
@@ -659,7 +659,7 @@ git commit -m "feat(provenance): ten frozen metadata contradiction rules"
 
 ---
 
-### Task 3: Stream assembly — facts, score, feature vector, stress replicas
+### Task 3: Stream assembly - facts, score, feature vector, stress replicas
 
 **Files:**
 - Modify: `peri/core/provenance.py` (append)
@@ -670,12 +670,12 @@ git commit -m "feat(provenance): ten frozen metadata contradiction rules"
 - Produces:
   - `PROVENANCE_FEATURE_DIM: int = 6`
   - `collect_facts(path, container=None, now_utc=None) -> dict`
-  - `provenance_score(rule_results: list[dict]) -> float` — weighted fraction in `[0,1]`
-  - `provenance_feature(facts, rule_results) -> tuple[float, ...]` — 6 dimensions:
+  - `provenance_score(rule_results: list[dict]) -> float` - weighted fraction in `[0,1]`
+  - `provenance_feature(facts, rule_results) -> tuple[float, ...]` - 6 dimensions:
     `(score, n_triggered, tag_count, log10(bit_rate + 1), fps, duration_s)`
-  - `provenance_stress_scores(facts) -> tuple[float, ...]` — leave-one-tag-out
+  - `provenance_stress_scores(facts) -> tuple[float, ...]` - leave-one-tag-out
     replicas, at most 8, always at least 1
-  - `analyse(path, container=None, now_utc=None) -> dict` — the stream's full record:
+  - `analyse(path, container=None, now_utc=None) -> dict` - the stream's full record:
     `{"stream": "provenance", "score", "feature", "stress_scores", "rules",
       "c2pa", "facts_summary", "n_triggered", "n_evaluated"}`
   - `to_observation(analysis: dict, weight: float = 1.0) -> StreamObservation`
@@ -786,7 +786,7 @@ def test_analysis_still_works_when_c2pa_is_unavailable(clip, monkeypatch):
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `.venv/Scripts/python.exe -m pytest tests/test_provenance_stream.py -v`
-Expected: FAIL — `AttributeError: module 'peri.core.provenance' has no attribute 'analyse'`
+Expected: FAIL - `AttributeError: module 'peri.core.provenance' has no attribute 'analyse'`
 
 - [ ] **Step 3: Write the implementation**
 
@@ -905,7 +905,7 @@ def to_observation(analysis: dict, weight: float = 1.0) -> StreamObservation:
 
 **Note on `examined_at_utc`:** it appears in `facts_summary` and therefore in findings.
 Phase 10's `canonical_findings()` strips it before hashing. Do not remove it from the
-record — the report needs it.
+record - the report needs it.
 
 - [ ] **Step 4: Run test to verify it passes**
 
@@ -962,7 +962,7 @@ def test_provenance_needs_no_artifacts_directory(tmp_path, monkeypatch):
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `.venv/Scripts/python.exe -m pytest tests/test_provenance_acceptance.py -v`
-Expected: FAIL — `ModuleNotFoundError: No module named 'tools.provenance_demo'`
+Expected: FAIL - `ModuleNotFoundError: No module named 'tools.provenance_demo'`
 
 - [ ] **Step 3: Write the implementation**
 
@@ -1021,7 +1021,7 @@ Expected: PASS, 2 passed.
 
 Expected: a C2PA status line, a score line, ten rule lines each marked `HIT`, `ok`, or
 `n/a`, and a stress replica list. For the ffmpeg-generated fixture, expect `PRV-02`
-(encoder `Lavf`), `PRV-03`, `PRV-06`, and `PRV-10` to be `HIT` — a synthetically muxed
+(encoder `Lavf`), `PRV-03`, `PRV-06`, and `PRV-10` to be `HIT` - a synthetically muxed
 clip is exactly what this rule set is meant to notice.
 
 - [ ] **Step 6: Commit**
@@ -1044,7 +1044,7 @@ grep -rnE "import torch|from torch|sklearn|timm" peri/core/provenance.py
 **Pass criteria, all five:**
 1. 35 tests pass, 0 fail.
 2. The driver prints a ten-row rule table with a score in `[0,1]`.
-3. The `grep` returns nothing — this stream imports no ML library.
+3. The `grep` returns nothing - this stream imports no ML library.
 4. Deleting `artifacts/` entirely and re-running the driver still produces the same
    rule table. **This is the "must work even if all training fails" criterion.**
 5. `analyse()` called twice on the same file returns equal dicts, except for

@@ -1,6 +1,6 @@
-# Team Peri Peri Fries — PRAMĀṆA v2 
+# Team Peri Peri Fries - Team Peri Peri Fries v2 
 
-This repository contains the PRAMĀṆA v2 forensic examination protocol engine, built by **Team Peri Peri Fries**.
+This repository contains the Team Peri Peri Fries v2 forensic examination protocol engine, built by **Team Peri Peri Fries**.
 
 ## Training on a Separate GPU Laptop
 

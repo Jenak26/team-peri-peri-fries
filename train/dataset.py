@@ -1,7 +1,7 @@
 """Datasets for Stage A (contrastive fingerprint) and Stage B (mask decoder).
 
 Both read the corpus index written by train/build_corpus.py. Stage A uses ONLY the
-authentic samples — the fingerprint is learned from unmanipulated video and never
+authentic samples - the fingerprint is learned from unmanipulated video and never
 sees a manipulated frame, which is what lets it act as an anomaly detector rather
 than a classifier of the manipulations we happened to synthesise.
 """

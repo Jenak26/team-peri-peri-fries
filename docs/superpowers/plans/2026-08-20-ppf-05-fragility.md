@@ -1,10 +1,10 @@
-# Phase 4 — Evidence Fragility Index Implementation Plan
+# Phase 4 - Evidence Fragility Index Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development
 > (recommended) or superpowers:executing-plans to implement this plan task-by-task.
 > Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build `peri/core/fragility.py` — an adversarial search that finds, on three
+**Goal:** Build `peri/core/fragility.py` - an adversarial search that finds, on three
 independent laundering axes, the minimum degradation strength at which **our own
 verdict flips**, reports it in court-legible units, assigns a band, and forces
 `INCONCLUSIVE` when the verdict does not survive ordinary social-media recompression.
@@ -18,7 +18,7 @@ before any model exists, which is CLAUDE.md section 3, CPU-track step 5.
 Each axis is an **ordered ladder** from mildest to harshest laundering. The search is a
 binary search over ladder indices under a stated monotonicity assumption: if the
 verdict survives level *k*, it is assumed to survive every level milder than *k*. That
-assumption is stated in the report, not hidden — it is what makes the search
+assumption is stated in the report, not hidden - it is what makes the search
 logarithmic instead of linear, and a reviewer is entitled to know it.
 
 **Tech Stack:** Python 3.12, ffmpeg (re-encode / rescale), OpenCV + Pillow (JPEG frame
@@ -31,7 +31,7 @@ Depends on: Phase 1 (outcome strings).
 ## Global Constraints
 
 - **HARD RULE (CLAUDE.md section 6):** training augmentations and fragility-search
-  transforms must be **disjoint** — different families, different parameter ranges.
+  transforms must be **disjoint** - different families, different parameter ranges.
   This is asserted in code by `assert_transform_disjointness()`, which is called at
   import time of both this module and every training script. If it ever raises, the
   robustness claim is circular and the build stops. Both sets are printed on the
@@ -55,18 +55,18 @@ Depends on: Phase 1 (outcome strings).
 **Interfaces:**
 - Consumes: nothing (this task is pure data plus one assertion).
 - Produces:
-  - `TRAINING_AUGMENTATIONS: dict[str, dict]` — the **only** augmentations any
+  - `TRAINING_AUGMENTATIONS: dict[str, dict]` - the **only** augmentations any
     training script may use. Each entry: `{"family": str, "params": dict}`.
     Families: `gaussian_blur`, `additive_gaussian_noise`, `horizontal_flip`,
     `random_crop`.
-  - `FRAGILITY_AXES: dict[str, dict]` — three axes. Each entry:
+  - `FRAGILITY_AXES: dict[str, dict]` - three axes. Each entry:
     `{"family": str, "unit": str, "ladder": tuple[float, ...], "label": Callable}`.
     Families: `codec_reencode`, `spatial_rescale`, `jpeg_recompression`.
   - `AXIS_NAMES: tuple[str, ...] = ("reencode_crf", "rescale", "jpeg_quality")`
-  - `assert_transform_disjointness() -> None` — raises `AssertionError` naming the
+  - `assert_transform_disjointness() -> None` - raises `AssertionError` naming the
     overlap if any family appears in both sets, or if any training augmentation
     performs codec re-encoding, spatial rescaling, or JPEG recompression.
-  - `axis_label(axis: str, level: float) -> str` — `"CRF 34"`, `"41% rescale"`,
+  - `axis_label(axis: str, level: float) -> str` - `"CRF 34"`, `"41% rescale"`,
     `"JPEG q38"`
 
 - [ ] **Step 1: Write the failing test**
@@ -140,7 +140,7 @@ def test_axis_labels_are_court_legible():
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `.venv/Scripts/python.exe -m pytest tests/test_fragility_disjointness.py -v`
-Expected: FAIL — `ModuleNotFoundError: No module named 'peri.core.fragility'`
+Expected: FAIL - `ModuleNotFoundError: No module named 'peri.core.fragility'`
 
 - [ ] **Step 3: Write the implementation**
 
@@ -262,14 +262,14 @@ git commit -m "feat(fragility): transform ladders and the disjointness hard rule
 **Interfaces:**
 - Consumes: Task 1; Phase 1 outcome strings.
 - Produces:
-  - `class AxisResult` — frozen dataclass: `axis: str`, `unit: str`,
+  - `class AxisResult` - frozen dataclass: `axis: str`, `unit: str`,
     `baseline_outcome: str`, `survives_to: float | None`,
     `survives_to_label: str | None`, `flips_at: float | None`,
     `flips_at_label: str | None`, `flipped_outcome: str | None`,
     `evaluations: int`, `band: str`; plus `to_dict()`
-  - `search_axis(axis, baseline_outcome, verdict_fn) -> AxisResult` — binary search
+  - `search_axis(axis, baseline_outcome, verdict_fn) -> AxisResult` - binary search
     over ladder indices; `verdict_fn(axis: str, level: float) -> str`
-  - `AXIS_BAND_RULES: dict[str, dict]` — per-axis `LOW` / `HIGH` cut points
+  - `AXIS_BAND_RULES: dict[str, dict]` - per-axis `LOW` / `HIGH` cut points
 
 **Band rules per axis** (a flip at or before the `high_at` rung means the conclusion
 does not survive ordinary social-media recompression):
@@ -403,7 +403,7 @@ def test_axis_result_dict_is_json_ready():
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `.venv/Scripts/python.exe -m pytest tests/test_fragility_search.py -v`
-Expected: FAIL — `AttributeError: module 'peri.core.fragility' has no attribute 'search_axis'`
+Expected: FAIL - `AttributeError: module 'peri.core.fragility' has no attribute 'search_axis'`
 
 - [ ] **Step 3: Write the implementation**
 
@@ -586,7 +586,7 @@ git commit -m "feat(fragility): binary-search breaking point with per-axis bands
 **Interfaces:**
 - Consumes: Task 2.
 - Produces:
-  - `class FragilityIndex` — frozen dataclass: `axes: tuple[AxisResult, ...]`,
+  - `class FragilityIndex` - frozen dataclass: `axes: tuple[AxisResult, ...]`,
     `band: str`, `forces_inconclusive: bool`, `statement: str`,
     `monotonicity_assumption: str`; plus `to_dict()`
   - `assess_fragility(baseline_outcome, verdict_fn, axes=AXIS_NAMES) -> FragilityIndex`
@@ -684,7 +684,7 @@ def test_flips_sentence_names_only_the_axes_that_flipped():
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `.venv/Scripts/python.exe -m pytest tests/test_fragility_index.py -v`
-Expected: FAIL — `AttributeError: module 'peri.core.fragility' has no attribute 'assess_fragility'`
+Expected: FAIL - `AttributeError: module 'peri.core.fragility' has no attribute 'assess_fragility'`
 
 - [ ] **Step 3: Write the implementation**
 
@@ -767,7 +767,7 @@ git commit -m "feat(fragility): whole-index assembly and forced abstention on HI
 
 ---
 
-### Task 4: Real transforms — ffmpeg re-encode, rescale, JPEG frame recompression
+### Task 4: Real transforms - ffmpeg re-encode, rescale, JPEG frame recompression
 
 **Files:**
 - Modify: `peri/core/fragility.py` (append)
@@ -776,9 +776,9 @@ git commit -m "feat(fragility): whole-index assembly and forced abstention on HI
 **Interfaces:**
 - Consumes: Task 1 ladders; ffmpeg on PATH; OpenCV + Pillow.
 - Produces:
-  - `apply_axis_transform(src, dst, axis, level) -> Path` — writes a laundered copy
+  - `apply_axis_transform(src, dst, axis, level) -> Path` - writes a laundered copy
   - `make_verdict_fn(working_path, examine_fn, workdir) -> Callable[[str, float], str]`
-    — the production adapter Phase 7 passes to `assess_fragility`. `examine_fn` takes
+    - the production adapter Phase 7 passes to `assess_fragility`. `examine_fn` takes
     a path and returns an outcome string. Laundered copies are written into `workdir`
     and are never written back into the evidence directory.
 
@@ -891,7 +891,7 @@ def test_verdict_fn_never_writes_into_the_source_directory(clip, tmp_path):
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `.venv/Scripts/python.exe -m pytest tests/test_fragility_transforms.py -v`
-Expected: FAIL — `AttributeError: module 'peri.core.fragility' has no attribute 'apply_axis_transform'`
+Expected: FAIL - `AttributeError: module 'peri.core.fragility' has no attribute 'apply_axis_transform'`
 
 - [ ] **Step 3: Write the implementation**
 
@@ -1106,7 +1106,7 @@ def test_a_fragile_conclusion_forces_abstention():
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `.venv/Scripts/python.exe -m pytest tests/test_fragility_acceptance.py -v`
-Expected: FAIL — `ModuleNotFoundError: No module named 'tools.fragility_demo'`
+Expected: FAIL - `ModuleNotFoundError: No module named 'tools.fragility_demo'`
 
 - [ ] **Step 3: Write the implementation**
 
