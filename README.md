@@ -1,6 +1,6 @@
-# PRAMĀṆA v2 — Judicial Digital Evidence Authentication Engine
+# Team Peri Peri Fries — PRAMĀṆA v2 
 
-This repository contains the PRAMĀṆA v2 forensic examination protocol engine.
+This repository contains the PRAMĀṆA v2 forensic examination protocol engine, built by **Team Peri Peri Fries**.
 
 ## Training on a Separate GPU Laptop
 
