@@ -226,13 +226,17 @@ class _Sheet:
             reader, LEFT, self.y - height, width=width, height=height,
             preserveAspectRatio=True, anchor="sw",
         )
-        self.y -= height + 4
+        # drawString places the baseline, so the caption needs a full line of clearance
+        # below the image or its ascenders print over the bottom of the picture.
+        self.y -= height + LINE
         if caption:
             self.canvas.setFont(BODY_FONT, 7)
             self.canvas.setFillGray(0.35)
-            self.canvas.drawString(LEFT, self.y, caption)
+            for line in self._wrap(caption, BODY_FONT, 7, self.text_width):
+                self.canvas.drawString(LEFT, self.y, line)
+                self.y -= LINE - 2
             self.canvas.setFillGray(0.0)
-            self.y -= LINE
+            self.y -= 6
 
     def save(self) -> None:
         self._footer()

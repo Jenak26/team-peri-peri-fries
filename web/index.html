@@ -169,7 +169,7 @@
       <aside>
         <form id="uploadForm" class="drop">
           <strong>Drop a video exhibit</strong>
-          <p class="notice">The API keeps the original sealed and works from a byte-identical copy. Current local build runs without checkpoints.</p>
+          <p class="notice">Your file is hashed on receipt, sealed read-only, and never written to again; the examination runs on a byte-identical copy. Which operators actually ran is reported below as the videoprint and temporal modes.</p>
           <input id="file" class="file-input" type="file" accept="video/*" />
           <button class="btn" type="submit">Start Examination</button>
         </form>
@@ -246,6 +246,26 @@
       div.innerHTML = `<span>${row.seq}</span><span>${row.event}</span><span>${row.hash}</span>`;
       $("ledger").appendChild(div);
       $("ledgerState").textContent = row.event;
+    }
+
+    async function refreshLedger(evidenceId) {
+      try {
+        const res = await fetch(url(`/ledger/${evidenceId}`));
+        if (!res.ok) return;
+        const data = await res.json();
+        const box = $("ledger");
+        box.innerHTML = '<div class="ledger-row"><span>seq</span><span>event</span><span>hash</span></div>';
+        (data.events || []).forEach((row) => {
+          const div = document.createElement("div");
+          div.className = "ledger-row";
+          div.innerHTML = `<span>${row.seq}</span><span>${row.event}</span><span>${row.hash}</span>`;
+          box.appendChild(div);
+        });
+        const last = (data.events || [])[data.events.length - 1];
+        if (last) $("ledgerState").textContent = last.event;
+      } catch (err) {
+        console.error("ledger refresh failed", err);
+      }
     }
 
     function renderTimeline(items) {
@@ -377,11 +397,21 @@
         
         source.addEventListener("job", (e) => {
           const state = JSON.parse(e.data);
-          if (state.evidence_id) currentEvidence = state.evidence_id;
+          if (state.evidence_id) {
+            // The evidence ID exists from the moment intake seals the original, so
+            // show it while the examination is still running rather than making the
+            // custody identifier wait on the verdict.
+            currentEvidence = state.evidence_id;
+            $("evidence").textContent = state.evidence_id;
+          }
           if (state.state === "done") {
             $("mode").textContent = "done";
             loadFindings(state.evidence_id);
             source.close();
+            // The stream closes as soon as the job reports done, which can be before
+            // the last ledger events have been pushed. Re-read the chain from the API
+            // so the table and the badge show the sealed record, not a partial one.
+            refreshLedger(state.evidence_id);
           }
           if (state.state === "error") {
             $("mode").textContent = "error";
@@ -412,6 +442,7 @@
       const res = await fetch(url(`/replay/${currentEvidence}`), { method: "POST" });
       const data = await res.json();
       $("replay").textContent = `${data.match ? "match" : "mismatch"} ${data.original_hash} / ${data.replay_hash}`;
+      refreshLedger(currentEvidence);
     };
   </script>
 </body>
