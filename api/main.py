@@ -74,6 +74,29 @@ def _run_examination(temp_path: Path, job_id: str, original_filename: str | None
             temp_path.unlink(missing_ok=True)
 
 
+def _require_findings(evidence_id: str) -> Path:
+    """Return the findings path, distinguishing "not here" from "not yet".
+
+    An examination writes findings.json only when it seals them, so a request that
+    arrives mid-run is asking for something that legitimately does not exist yet. That
+    is a different situation from an unknown evidence ID, and saying so is the
+    difference between a usable message and a bare 404.
+    """
+    evidence_dir = EVIDENCE_ROOT / evidence_id
+    findings_path = evidence_dir / "findings.json"
+    if findings_path.is_file():
+        return findings_path
+    if (evidence_dir / "ledger.jsonl").is_file():
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                f"Examination {evidence_id} is still running and has not sealed its "
+                "findings yet. The report and the replay become available once it has."
+            ),
+        )
+    raise HTTPException(status_code=404, detail=f"No examination found for {evidence_id}.")
+
+
 @app.post("/examine")
 async def examine_upload(background_tasks: BackgroundTasks, file: UploadFile = UPLOAD_FIELD):
     suffix = Path(file.filename or "upload.mp4").suffix or ".mp4"
@@ -114,18 +137,14 @@ async def status(identifier: str):
 
 @app.get("/findings/{evidence_id}")
 async def findings(evidence_id: str):
-    path = EVIDENCE_ROOT / evidence_id / "findings.json"
-    if not path.is_file():
-        raise HTTPException(status_code=404, detail="findings not found")
+    path = _require_findings(evidence_id)
     return json.loads(path.read_text(encoding="utf-8"))
 
 
 @app.get("/report/{evidence_id}")
 async def report(evidence_id: str):
+    findings_path = _require_findings(evidence_id)
     evidence_dir = EVIDENCE_ROOT / evidence_id
-    findings_path = evidence_dir / "findings.json"
-    if not findings_path.is_file():
-        raise HTTPException(status_code=404, detail="findings not found")
     pdf = evidence_dir / "report.pdf"
     if not pdf.is_file():
         write_report(json.loads(findings_path.read_text(encoding="utf-8")), pdf)

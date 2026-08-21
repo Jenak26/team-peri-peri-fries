@@ -69,6 +69,8 @@
     }
     .btn:active { transform: translateY(1px); }
     .btn.secondary { background: transparent; color: var(--ink); }
+    .btn:disabled { opacity: .4; cursor: not-allowed; }
+    .btn:disabled:active { transform: none; }
     .stack { display: grid; gap: 18px; }
     section { border-top: 1px solid var(--line); padding: 24px 0; }
     section:first-child { border-top: 0; padding-top: 0; }
@@ -268,6 +270,21 @@
       }
     }
 
+    // Findings, and therefore the report and the replay, only exist once the
+    // examination has sealed them. Offering the buttons mid-run invites a click that
+    // can only fail, so they stay disabled and say what they are waiting for.
+    let examinationComplete = false;
+
+    function setActionsEnabled(enabled) {
+      ["reportBtn", "replayBtn"].forEach((id) => {
+        const button = $(id);
+        button.disabled = !enabled;
+        button.title = enabled
+          ? ""
+          : "Available once the examination has sealed its findings.";
+      });
+    }
+
     function renderTimeline(items) {
       const box = $("timeline");
       box.innerHTML = "";
@@ -371,6 +388,9 @@
 
       const first = f.localisation.top_suspect_frames[0];
       if (first) showFrame(first.index);
+
+      examinationComplete = true;
+      setActionsEnabled(true);
     }
 
     $("uploadForm").addEventListener("submit", async (event) => {
@@ -382,6 +402,9 @@
           return;
         }
         $("mode").textContent = "running";
+        examinationComplete = false;
+        setActionsEnabled(false);
+        $("replay").textContent = "";
         $("ledger").innerHTML = '<div class="ledger-row"><span>seq</span><span>event</span><span>hash</span></div>';
         
         const data = new FormData();
@@ -415,7 +438,7 @@
           }
           if (state.state === "error") {
             $("mode").textContent = "error";
-            $("sentence").textContent = state.error;
+            $("sentence").textContent = `The examination failed: ${state.error}`;
             source.close();
           }
         });
@@ -433,16 +456,32 @@
     });
 
     $("engine").textContent = API || "same origin";
+    setActionsEnabled(false);
 
     $("reportBtn").onclick = () => {
-      if (currentEvidence) window.open(url(`/report/${currentEvidence}`), "_blank");
+      if (!examinationComplete) return;
+      window.open(url(`/report/${currentEvidence}`), "_blank");
     };
+
     $("replayBtn").onclick = async () => {
-      if (!currentEvidence) return;
-      const res = await fetch(url(`/replay/${currentEvidence}`), { method: "POST" });
-      const data = await res.json();
-      $("replay").textContent = `${data.match ? "match" : "mismatch"} ${data.original_hash} / ${data.replay_hash}`;
-      refreshLedger(currentEvidence);
+      if (!examinationComplete) return;
+      setActionsEnabled(false);
+      $("replay").textContent =
+        "Re-running the examination from its manifest. This takes as long as the " +
+        "first run did.";
+      try {
+        const res = await fetch(url(`/replay/${currentEvidence}`), { method: "POST" });
+        if (!res.ok) throw new Error(`the engine returned ${res.status}`);
+        const data = await res.json();
+        $("replay").textContent = data.match
+          ? `MATCH - both runs sealed ${data.replay_hash}`
+          : `MISMATCH - ${data.original_hash} / ${data.replay_hash}`;
+        refreshLedger(currentEvidence);
+      } catch (err) {
+        $("replay").textContent = `Replay could not be completed: ${err.message}`;
+      } finally {
+        setActionsEnabled(true);
+      }
     };
   </script>
 </body>

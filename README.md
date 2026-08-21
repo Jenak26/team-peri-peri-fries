@@ -13,15 +13,11 @@
 [![Replay](https://img.shields.io/badge/replay-byte--identical%20findings%20hash-0284c7?style=for-the-badge)](#determinism-and-replay)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
 
-**[Open the project site &rarr;](https://peri-peri-fries.vercel.app/)** &nbsp;·&nbsp;
-**[Live examination console &rarr;](https://peri-peri-fries.vercel.app/console)**
+**Public hosted demo: coming soon.** &nbsp;·&nbsp;
+**[Run it locally in five minutes &rarr;](#run-it-yourself-five-minutes)**
 
-The project page renders a real, replayable examination record - decision, fragility
-index, tamper timeline, custody ledger, and the RGB/Videoprint toggle. The console is
-where you submit your own exhibit; it needs an engine, either your own local one or a
-deployed Space (see *Putting it on the internet*).
-
-Mirror of the project page: <https://jenak26.github.io/team-peri-peri-fries/>
+Runs entirely on your machine today - submit your own clip, get your own sealed record
+and your own report. See [why it is not hosted yet](#public-deployment---coming-soon).
 
 </div>
 
@@ -134,56 +130,17 @@ REASON           no-usable-stream
 
 ---
 
-## Quickstart
+## Run it yourself, five minutes
 
-**Examination workstation - no GPU required.** This is everything you need to run the
-forensic core and its acceptance tests.
-
-```bash
-git clone https://github.com/Jenak26/team-peri-peri-fries.git
-cd team-peri-peri-fries
-
-python -m venv .venv
-source .venv/bin/activate          # Windows: .venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-pip install -r requirements-cpu.txt
-
-python -m pytest -q                # 88 tests
-python -m tools.selftest_lr        # the 3 acceptance assertions
-python -m tools.write_environment  # regenerate artifacts/environment.json
-```
-
-`tools.selftest_lr` is the one to run first, and it is deliberately runnable **before
-any model exists**:
-
-```text
-PASS  clear_manipulation   MANIPULATION INDICATED   log10LR +3.982  reason -
-PASS  unstable             INCONCLUSIVE             log10LR +0.000  reason no-usable-stream
-PASS  out_of_domain        INCONCLUSIVE             log10LR +0.000  reason no-usable-stream
-```
-
-> [!TIP]
-> Those three lines are the project's real acceptance test: a clear manipulation is
-> reported, an unstable stream abstains, and an out-of-domain exhibit abstains. They
-> exercise the likelihood-ratio layer against synthetic scores with no neural network
-> in existence - which is exactly why the highest-risk component was built and tested
-> first.
-
-**Training workstation - NVIDIA GPU.** The full walkthrough, written for someone who
-has never trained a model, is in [**docs/TRAINING.md**](docs/TRAINING.md).
-
----
-
-## Run it on your machine, and examine your own clip
-
-Everything below works on a clean clone with **no trained checkpoints and no GPU**.
-Where a model is missing the pipeline substitutes a documented classical operator and
-says so on screen and in the report - that fallback is the path we rehearse, not an
-error state.
+> **Judges: this is the whole demo.** No account, no API key, no network at examination
+> time. Everything runs on your machine. It works on a clean clone **with no trained
+> checkpoints and no GPU** - where a model is absent the pipeline substitutes a
+> documented classical operator and says so on screen and in the report, rather than
+> pretending otherwise. That fallback is the path we rehearse.
 
 ### 1. Prerequisites
 
-You need **Python 3.10, 3.11 or 3.12** and **ffmpeg** on your `PATH`.
+**Python 3.10, 3.11 or 3.12**, and **ffmpeg** on your `PATH`.
 
 | Platform | Install ffmpeg |
 |---|---|
@@ -195,7 +152,7 @@ You need **Python 3.10, 3.11 or 3.12** and **ffmpeg** on your `PATH`.
 ffmpeg -version    # must print a version, not "command not found"
 ```
 
-### 2. Clone and install
+### 2. Install
 
 ```bash
 git clone https://github.com/Jenak26/team-peri-peri-fries.git
@@ -203,187 +160,172 @@ cd team-peri-peri-fries
 
 python -m venv .venv
 # Windows PowerShell:  .venv\Scripts\Activate.ps1
-# Windows Git Bash:    source .venv/Scripts/activate
 # macOS / Linux:       source .venv/bin/activate
 
 python -m pip install --upgrade pip
 pip install -r requirements-cpu.txt
 ```
 
-### 3. Prove the install before trusting anything it says
+### 3. Check it before trusting anything it says
 
 ```bash
-python -m pytest -q            # 88 tests, no GPU, a few seconds
+python -m pytest -q            # 88 tests, no GPU, about three seconds
 python -m tools.selftest_lr    # the three acceptance assertions
 ```
 
-### 4. Start the examination console
-
-```bash
-python -m uvicorn api.main:app --host 127.0.0.1 --port 8000
+```text
+PASS  clear_manipulation   MANIPULATION INDICATED   log10LR +3.982  reason -
+PASS  unstable             INCONCLUSIVE             log10LR +0.000  reason no-usable-stream
+PASS  out_of_domain        INCONCLUSIVE             log10LR +0.000  reason no-usable-stream
 ```
 
-Open **<http://127.0.0.1:8000>** and drop a video file on the panel on the left.
-Any short `.mp4` works. If you would rather not hunt for one, generate the
-deterministic fixture in a second terminal:
+> [!TIP]
+> Those three lines are the project's real acceptance test: a clear manipulation is
+> reported, an unstable stream abstains, and an out-of-domain exhibit abstains. They
+> exercise the likelihood-ratio layer against synthetic scores **with no neural network
+> in existence** - which is exactly why the highest-risk component was built first.
+
+### 4. Start the console and submit a clip
+
+```bash
+python -m uvicorn api.main:app --port 8000
+```
+
+Open **<http://127.0.0.1:8000>** and drop any short `.mp4` on the left-hand panel.
+No clip to hand? Generate the deterministic fixture in a second terminal:
 
 ```bash
 python -m tools.make_demo_clip     # writes evidence/_fixtures/demo.mp4
 ```
 
-### 5. What you will see
+### 5. What you are looking at
 
-1. The evidence ID appears and the SHA-256 of your original types itself out. The
-   file you dropped is sealed read-only and never written to again.
-2. The custody ledger fills in live, one hash-chained entry per examination event.
-3. **RGB / Videoprint / Tamper mask** switches the viewer between the recorded
-   picture, the acquisition fingerprint, and the decoder's mask. Press <kbd>V</kbd>
-   to flip between the first two - a composited region carries a different texture
-   because it was not acquired the same way.
-4. The tamper timeline fills; click any bar to jump the viewer to that frame.
-   Faded bars are frames the model does not trust.
-5. The fragility panel reports the laundering strength at which our own conclusion
+1. The **evidence ID** appears and the **SHA-256 of your file** types itself out. Your
+   original is sealed read-only from that moment and is never written to again.
+2. The **custody ledger** fills in live - one hash-chained entry per examination event.
+3. **RGB / Videoprint / Tamper mask** switches the viewer. Press <kbd>V</kbd> to flip
+   between the first two. *This is the one to look at:* a composited region carries a
+   different texture in the fingerprint view, because it was never acquired the same
+   way as the frame around it.
+4. The **tamper timeline** fills. Click any bar to send the viewer to that frame. Faded
+   bars are frames the model does not trust, shown rather than hidden.
+5. The **fragility panel** reports the laundering strength at which our own conclusion
    would break.
-6. The log<sub>10</sub> LR dial, the ENFSI verbal equivalent, and the outcome. An
-   amber `INCONCLUSIVE` with a reason code is a correct answer, not a failure.
-7. **Generate Report** writes the nine-page PDF. **Verify Replay** re-runs the whole
-   examination and shows the two findings hashes side by side.
+6. The **log₁₀ LR dial**, the ENFSI verbal equivalent, and the outcome. An amber
+   `INCONCLUSIVE` carrying a reason code is a correct answer, not a failure.
+7. **Generate Report** writes the nine-section PDF. **Verify Replay** re-runs the whole
+   examination and puts the two findings hashes side by side.
 
-### 6. How long it takes
+> [!NOTE]
+> **Budget about five minutes per examination on CPU.** That is not slow code. It is 64
+> frames scored, and then the conclusion attacked along three laundering ladders with a
+> full re-score at every rung - roughly thirteen examinations to produce one defensible
+> answer. The uvicorn terminal prints progress and the ledger keeps appending
+> throughout. If your PyTorch build exposes CUDA the pipeline uses it automatically and
+> it is far quicker:
+> ```bash
+> python -c "import torch; print(torch.cuda.is_available())"
+> ```
 
-An examination samples 64 frames and then attacks its own verdict along three
-laundering ladders, so on a CPU-only install expect **roughly five minutes** for a
-short clip. The terminal running uvicorn prints progress. If your PyTorch build
-exposes CUDA, the pipeline picks it up automatically and it is far quicker:
+### 6. Running with the trained checkpoints
 
-```bash
-python -c "import torch; print(torch.cuda.is_available())"
-```
-
-### 7. Running with the trained checkpoints
-
-The three `.pt` files are not in the repository - `stage_b_decoder.pt` alone is
+The three `.pt` files are **not** in this repository - `stage_b_decoder.pt` alone is
 105 MB, past GitHub's hard file limit. Train them with
-[**docs/TRAINING.md**](docs/TRAINING.md), then drop them into `artifacts/` as
-`stage_a_videoprint.pt`, `stage_b_decoder.pt` and `stage_c_temporal.pt` and record
+[**docs/TRAINING.md**](docs/TRAINING.md), then place them in `artifacts/` and record
 their hashes:
 
 ```bash
 python -m tools.checksum_artifacts
 ```
 
-The console's **videoprint mode** and **temporal mode** readouts tell you which path
-actually ran, and the same information is on the report's Methods page. Without the
+The console's **videoprint mode** and **temporal mode** readouts say which path
+actually ran, and the report's Methods page carries the same fact. Without the
 checkpoints you get `srm-residual` and `residual-threshold`; with them,
 `learned-videoprint` and `learned-decoder`.
 
-### 8. Command line, without the browser
+### 7. Without the browser
 
 ```bash
-python -c "from peri.core.pipeline import examine;   f = examine('evidence/_fixtures/demo.mp4', examiner='your-name');   print(f['decision']['outcome'], f['findings_hash'])"
+python -c "from peri.core.pipeline import examine; \
+  f = examine('evidence/_fixtures/demo.mp4', examiner='your-name'); \
+  print(f['decision']['outcome'], f['findings_hash'])"
 ```
 
 Everything an examination produces lands in `evidence/{EVIDENCE_ID}/`: the sealed
-original, the working copy, `findings.json`, `ledger.jsonl`, `manifest.json`, the
-frame renders and `report.pdf`.
+original, the working copy, `findings.json`, `ledger.jsonl`, `manifest.json`, the frame
+renders, and `report.pdf`.
 
 ### Troubleshooting
 
 | Symptom | Cause and fix |
 |---|---|
 | `could not open video` | ffmpeg/ffprobe not on `PATH`, or the file is not a video container |
-| Examination sits at "running" for minutes | Expected on CPU. Watch the uvicorn terminal; the ledger keeps appending |
-| `videoprint mode: srm-residual` | No `artifacts/*.pt` present. This is the documented fallback, not a fault |
-| Videoprint tab greyed out | That examination recorded no fingerprint field; re-run after adding checkpoints |
+| Sits at "running" for minutes | Expected on CPU - see the note above. Watch the uvicorn terminal |
+| `videoprint mode: srm-residual` | No `artifacts/*.pt` present. The documented fallback, not a fault |
+| Videoprint tab greyed out | That examination recorded no fingerprint field; add checkpoints and re-run |
 | Port 8000 already in use | `--port 8001`, and open that port instead |
+
+**Training workstation - NVIDIA GPU.** The full walkthrough, written for someone who
+has never trained a model, is in [**docs/TRAINING.md**](docs/TRAINING.md).
 
 ---
 
-## Putting it on the internet
+## Public deployment - coming soon
 
-The console and the engine deploy to different places, for a reason worth stating
-plainly: **the engine cannot run on serverless hosting.** Vercel's Python runtime caps
-a function bundle at 250 MB unzipped and a request at 60 s (300 s on Pro). A CPU-only
-PyTorch install is close to 1 GB before our own code, `stage_b_decoder.pt` is 105 MB on
-its own, one examination takes minutes, and the pipeline shells out to `ffmpeg`, which
-serverless Python runtimes do not ship. So:
+The engine is deliberately not on a free serverless host, and the reason is worth
+stating plainly rather than hiding behind a "coming soon".
 
-| Piece | Where | Why |
+**It does not fit, and that is arithmetic rather than preference.** Vercel's Python
+runtime caps a function bundle at 250 MB unzipped and a request at 60 s (300 s on Pro).
+A CPU-only PyTorch install is close to 1 GB before any of our own code,
+`stage_b_decoder.pt` is 105 MB on its own, one examination runs for minutes, and the
+pipeline shells out to `ffmpeg`, which serverless Python runtimes do not ship.
+
+So the deployment splits: static console to a CDN, engine to a container host.
+
+| Piece | Target | Why |
 |---|---|---|
-| Project page + examination console | **Vercel** | Static files, instant, custom domain |
-| Examination engine (FastAPI + PyTorch + ffmpeg) | **Hugging Face Spaces** | Docker, no bundle cap, no request timeout, holds the checkpoints |
+| Project page + console | any static host | Plain files, no build step, no runtime |
+| Engine (FastAPI + PyTorch + ffmpeg) | Docker container host | No bundle cap, no request timeout, room for the checkpoints |
 
-### 1. Deploy the engine to a Space
+**The budget constraint.** This is a student project built for a hackathon, with no
+infrastructure budget. Hugging Face Spaces was the intended home - it is built for
+precisely this - but Docker Spaces on free `cpu-basic` hardware now require a **PRO
+subscription**; only static Spaces remain free, and a static Space cannot run PyTorch.
+The container hosts with a workable free tier all want a card on file. Rather than put
+a personal credit card behind a hackathon demo, or ship a hosted endpoint that quietly
+degrades to a weaker operator to fit a timeout, **the examination runs locally, in
+full, on the examiner's own machine** - which is also where a real forensic workstation
+would sit, offline and under the lab's control.
 
-Create a **Docker** Space, then push this repository to it with
-`deploy/space/Dockerfile` and `deploy/space/README.md` at the root:
+Everything needed to deploy is already written and committed, so this reverses in one
+command the moment there is a budget:
 
-```bash
-pip install huggingface_hub    # already present if you installed requirements-cpu.txt
-hf auth login                  # paste a WRITE token from hf.co/settings/tokens
-
-python -m deploy.push_space --space <your-hf-username>/peri-peri-fries
-```
-
-Run the login in a real terminal rather than piping a token in: it reads the token as
-hidden input, which keeps it out of your shell history. On huggingface_hub below 0.34
-the command is `huggingface-cli login` instead.
-
-That one command creates the Docker Space, uploads the engine, uploads the three
-checkpoints and `calibration.json`, and prints the engine URL. Add
-`--skip-checkpoints` to deploy the fallback path instead, which needs no `.pt` files
-at all and still produces findings, a fragility index, a ledger and a report.
-
-In the Space's **Settings → Variables**, set:
-
-```
-PERI_ALLOWED_ORIGINS = https://<your-project>.vercel.app
-```
-
-Without that the browser blocks the cross-origin call and the console sits at
-"running" forever. The Space builds in a few minutes and answers on
-`https://<you>-peri-peri-fries.hf.space`.
-
-> [!IMPORTANT]
-> **Docker Spaces are no longer free.** Hugging Face allows static Spaces on the free
-> tier, but Gradio and Docker Spaces on `cpu-basic` now require a PRO subscription, and
-> `create_repo` answers HTTP 402 without one. The engine cannot be a static Space: it
-> is PyTorch plus ffmpeg plus a 105 MB checkpoint. Either subscribe, deploy the same
-> `deploy/space/Dockerfile` to a host with a usable free tier such as Google Cloud Run,
-> or run the engine locally and point the deployed console at it with `?api=`.
-
-> [!NOTE]
-> A free CPU Space takes several minutes per examination and sleeps when idle - wake
-> it before you present. If the examination is on the critical path of a live demo,
-> upgrade the Space hardware or run the console against `localhost` instead.
-
-### 2. Deploy the console to Vercel
+- `deploy/space/Dockerfile` - the engine image, with the SegFormer encoder pre-cached
+  at build time so a cold start never stalls on a Hub fetch
+- `deploy/push_space.py` - creates the Space and uploads the engine and the checkpoints
+- `deploy/build_public.mjs` + `vercel.json` - assembles and serves the static console
+- `PERI_ALLOWED_ORIGINS` on the engine and `?api=` on the console - the two halves
+  already know how to find each other across origins
 
 ```bash
-npm i -g vercel
-vercel link
-vercel env add PERI_API production      # https://<you>-peri-peri-fries.hf.space
-vercel --prod
+hf auth login
+python -m deploy.push_space --space <user>/peri-peri-fries
 ```
 
-`deploy/build_public.mjs` assembles `public/` at build time and bakes `PERI_API` into
-the console, so the deployed page knows where its engine lives. The result:
-
-- `/` - the project page and a real, replayable examination record
-- `/console` - the live console: drop a clip, watch the ledger, get your own report
-
-You can also point a locally served console at any engine without rebuilding:
+Until then the console can be pointed at any engine without a rebuild, which is how a
+hosted front end and a laptop engine get tested together:
 
 ```
-http://127.0.0.1:8000/?api=https://<you>-peri-peri-fries.hf.space
+http://127.0.0.1:8000/?api=https://<engine-host>
 ```
 
 > [!IMPORTANT]
-> Every examination runs on the exhibit that was submitted. There is no pre-computed
-> result anywhere in this system: the evidence ID is derived from the SHA-256 of the
-> file you uploaded, and the findings, the ledger and the PDF are generated for it.
-> The one record published on the static page is labelled as a published record and is
-> the output of a real run you can reproduce with `/replay`.
+> **No examination result in this repository is pre-computed.** The evidence ID is
+> derived from the SHA-256 of the file submitted; the findings, the custody ledger and
+> the PDF are generated for that file on that run. Re-running an examination from its
+> own manifest reproduces its findings hash byte for byte, and `/replay` puts both
+> hashes side by side so the claim can be checked rather than believed.
 
 ---
 
