@@ -32,6 +32,54 @@ It is not FF++, and its numbers are never compared against published FF++ number
 
 ---
 
+## What the shipped corpus actually contains
+
+**Read this before quoting any number from this build.**
+
+The fifteen clips in `data/authentic/` are **procedurally generated random noise**, not
+recordings of people. Each is a 256x256, 60-frame clip of uniform pixel noise. Measured
+on any of them, the correlation between horizontally adjacent pixels is about `+0.005`;
+natural video sits between `+0.95` and `+0.99`. There is no face, no scene and no
+camera anywhere in the training, validation, calibration or test data.
+
+The consequences are specific, and none of them are hidden by saying it plainly:
+
+- **The models detect a composited region in noise.** That is a real and non-trivial
+  acquisition-consistency task, and it is the task the reported metrics describe. It is
+  *not* facial manipulation detection, and no number from this build may be presented
+  as though it were.
+- **The propositions name the facial region.** `Hd` reads "synthetically generated or
+  materially manipulated in the facial region". No face took part in training, so the
+  learned streams have no evidence about faces to contribute. Until the corpus contains
+  faces, the proposition is broader than the evidence supports.
+- **Any real recording is out of the validated domain, by construction.** The
+  Mahalanobis gate compares an exhibit's features against the calibration population,
+  and that population is noise. A genuine video of a person is nothing like it, so both
+  learned streams are excluded with `out-of-validated-domain` and the outcome is
+  `INCONCLUSIVE`. This is the abstention path behaving exactly as designed - the
+  instrument refusing to answer a question it was never calibrated for - but it means
+  the system cannot presently return a substantive verdict on real footage.
+- **`val_auroc` of 1.0 describes noise-splice separation** on eight validation samples.
+  It is not a face-forgery result and must never be quoted as one.
+
+The forensic protocol around the models - custody, likelihood ratios, the in-domain
+gate, the fragility index, the abstention path, the replayable record, the report - is
+independent of the corpus and works on any input. The corpus is what limits the
+*learned streams*, and replacing it is the single highest-leverage change available.
+
+To make this build say something substantive about real video, the corpus has to be
+rebuilt from real recordings and the models retrained and recalibrated:
+
+1. Put real clips in `data/authentic/` - your own recordings are the cleanest option
+   for consent and licensing, and a public forgery corpus such as FaceForensics++ or
+   Celeb-DF under its EULA is the defensible option for a claim about faces.
+2. `python -m train.build_corpus` regenerates the splices and the exact masks.
+3. Retrain Stage A, B and C, then re-run `train/stage_d_calibrate.py`.
+
+Until that is done, the honest framing on stage is: *this is a forensic examination
+protocol, demonstrated end to end, whose learned streams are currently calibrated on a
+synthetic corpus and therefore abstain on real footage.*
+
 ## Splits are by identity AND by generator, never random
 
 - **train / val** — the three non-held-out splice methods only.
@@ -43,7 +91,7 @@ seen its own calibration data reports a likelihood ratio that means nothing.
 
 ## How much source video you need
 
-Splits are assigned by identity, so the number of source clips sets everything:
+Splits are assigned by identity - one identity per source clip, which in the shipped corpus is one synthetic noise clip rather than one person - so the number of source clips sets everything:
 
 | source clips | train | val | cal | test |
 |---:|---:|---:|---:|---:|

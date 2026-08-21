@@ -560,6 +560,7 @@ purpose: it is the part that has to work whether or not the models finish traini
 | DONE | **Fragility axes** (`fragility`) | Three ladders, transform-set description, disjointness assertion enforced at import |
 | DONE | **Videoprint extractor** (`videoprint`) | 17-layer DnCNN + projection head, with an SRM residual filter bank as the fallback fingerprint |
 | DONE | **Corpus builder & training** (`train/`) | Four documented splice methods with exact masks, identity+generator splits, Stage A/B/C training scripts, VRAM preflight |
+| LIMITED | **Training corpus** (`PPF-ICV-1`) | **Synthetic noise, not faces.** The learned streams detect composited regions in noise; real footage falls outside the validated domain and is correctly reported `INCONCLUSIVE`. See [METHODOLOGY](docs/METHODOLOGY.md#what-the-shipped-corpus-actually-contains) |
 | DONE | **Tooling** (`tools/`) | Environment record, artifact checksums, LR self-test |
 | DONE | **Fragility search** | Ladders and the disjointness rule are in; the binary search for the breaking point is next |
 | DONE | **Intake & ledger** (L0, L6) | SHA-256 quarantine, ffprobe/EXIF, append-only hash chain |
