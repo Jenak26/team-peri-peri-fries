@@ -684,7 +684,7 @@ docs/                 training guide · methodology · build plans
 
 ## The team
 
-Built by four of us. Every design decision in the table above was argued out loud
+Built by the four of us. Every design decision in the table above was argued out loud
 before it was written down.
 
 | Member | GitHub |
