@@ -344,6 +344,14 @@ Without that the browser blocks the cross-origin call and the console sits at
 "running" forever. The Space builds in a few minutes and answers on
 `https://<you>-peri-peri-fries.hf.space`.
 
+> [!IMPORTANT]
+> **Docker Spaces are no longer free.** Hugging Face allows static Spaces on the free
+> tier, but Gradio and Docker Spaces on `cpu-basic` now require a PRO subscription, and
+> `create_repo` answers HTTP 402 without one. The engine cannot be a static Space: it
+> is PyTorch plus ffmpeg plus a 105 MB checkpoint. Either subscribe, deploy the same
+> `deploy/space/Dockerfile` to a host with a usable free tier such as Google Cloud Run,
+> or run the engine locally and point the deployed console at it with `?api=`.
+
 > [!NOTE]
 > A free CPU Space takes several minutes per examination and sleeps when idle - wake
 > it before you present. If the examination is on the critical path of a live demo,

@@ -46,7 +46,7 @@ def main() -> int:
 
     try:
         from huggingface_hub import HfApi
-        from huggingface_hub.errors import LocalTokenNotFoundError
+        from huggingface_hub.errors import HfHubHTTPError, LocalTokenNotFoundError
     except ImportError:
         print("huggingface_hub is not installed. Run: pip install huggingface_hub")
         return 1
@@ -64,13 +64,33 @@ def main() -> int:
         return 1
     print(f"authenticated as {user}")
 
-    api.create_repo(
-        repo_id=args.space,
-        repo_type="space",
-        space_sdk="docker",
-        private=args.private,
-        exist_ok=True,
-    )
+    try:
+        api.create_repo(
+            repo_id=args.space,
+            repo_type="space",
+            space_sdk="docker",
+            private=args.private,
+            exist_ok=True,
+        )
+    except HfHubHTTPError as exc:
+        if getattr(exc.response, "status_code", None) == 402:
+            print(
+                "\nHugging Face refused to create the Space (HTTP 402).\n"
+                "Static Spaces are free, but Docker and Gradio Spaces on free\n"
+                "cpu-basic hardware now require a PRO subscription.\n\n"
+                "The engine needs Docker: it is PyTorch plus ffmpeg plus a 105 MB\n"
+                "checkpoint, and one examination runs for minutes. A static Space\n"
+                "cannot host it. Your options:\n\n"
+                "  1. Subscribe to HF PRO at https://huggingface.co/pro, then re-run\n"
+                "     this command unchanged.\n"
+                "  2. Deploy the same Dockerfile to a host with a usable free tier.\n"
+                "     Google Cloud Run fits: it allows the ~2 GB of memory this needs\n"
+                "     and scales to zero between examinations.\n"
+                "  3. Run the engine locally and point the deployed console at it:\n"
+                "     https://peri-peri-fries.vercel.app/console?api=http://127.0.0.1:8000\n"
+            )
+            return 2
+        raise
     print(f"space ready: {args.space}")
 
     # The Space's own Dockerfile and card live at its root, not under deploy/.
