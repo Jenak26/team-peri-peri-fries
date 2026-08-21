@@ -319,11 +319,15 @@ Create a **Docker** Space, then push this repository to it with
 `deploy/space/Dockerfile` and `deploy/space/README.md` at the root:
 
 ```bash
-pip install huggingface_hub
-huggingface-cli login          # paste a WRITE token from hf.co/settings/tokens
+pip install huggingface_hub    # already present if you installed requirements-cpu.txt
+hf auth login                  # paste a WRITE token from hf.co/settings/tokens
 
 python -m deploy.push_space --space <your-hf-username>/peri-peri-fries
 ```
+
+Run the login in a real terminal rather than piping a token in: it reads the token as
+hidden input, which keeps it out of your shell history. On huggingface_hub below 0.34
+the command is `huggingface-cli login` instead.
 
 That one command creates the Docker Space, uploads the engine, uploads the three
 checkpoints and `calibration.json`, and prints the engine URL. Add
