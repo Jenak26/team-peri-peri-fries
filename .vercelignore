@@ -1,0 +1,20 @@
+# Vercel serves the static console and project page only. The examination engine runs
+# on a Docker Space, because a serverless bundle cannot hold PyTorch.
+#
+# api/ is listed first for a specific reason: Vercel auto-detects api/*.py as
+# serverless functions and will happily build a Python lambda from the FastAPI app
+# that then fails at runtime on the torch import. Excluding it keeps the deployment
+# honestly static instead of shipping a broken endpoint.
+api/
+peri/
+train/
+tools/
+tests/
+artifacts/
+evidence/
+data/
+docs/
+.venv/
+__pycache__/
+*.pt
+*.zip
