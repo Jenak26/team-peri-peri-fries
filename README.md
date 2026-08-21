@@ -13,9 +13,15 @@
 [![Replay](https://img.shields.io/badge/replay-byte--identical%20findings%20hash-0284c7?style=for-the-badge)](#determinism-and-replay)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
 
-**[Open the project site &rarr;](https://jenak26.github.io/team-peri-peri-fries/)**
-A real examination record - decision, fragility index, tamper timeline and custody
-ledger - rendered read-only, with nothing to install.
+**[Open the project site &rarr;](https://peri-peri-fries.vercel.app/)** &nbsp;·&nbsp;
+**[Live examination console &rarr;](https://peri-peri-fries.vercel.app/console)**
+
+The project page renders a real, replayable examination record - decision, fragility
+index, tamper timeline, custody ledger, and the RGB/Videoprint toggle. The console is
+where you submit your own exhibit; it needs an engine, either your own local one or a
+deployed Space (see *Putting it on the internet*).
+
+Mirror of the project page: <https://jenak26.github.io/team-peri-peri-fries/>
 
 </div>
 
