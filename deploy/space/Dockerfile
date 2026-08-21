@@ -25,6 +25,12 @@ RUN pip install --no-cache-dir --upgrade pip \
  && pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu \
  && pip install --no-cache-dir -r requirements-cpu.txt
 
+# Stage B builds its encoder with SegformerForSemanticSegmentation.from_pretrained,
+# which reaches the Hub the first time a checkpoint is loaded. Doing that during the
+# build means the first upload after a cold start is not waiting on a network fetch,
+# and a Hub hiccup cannot fail an examination.
+RUN python -c "from transformers import SegformerForSemanticSegmentation as M;     M.from_pretrained('nvidia/mit-b2', num_labels=2, ignore_mismatched_sizes=True)"
+
 COPY --chown=peri . .
 
 # Evidence is examination output and must be writable at runtime.

@@ -314,18 +314,15 @@ Create a **Docker** Space, then push this repository to it with
 
 ```bash
 pip install huggingface_hub
-huggingface-cli login                     # paste a write token from hf.co/settings/tokens
+huggingface-cli login          # paste a WRITE token from hf.co/settings/tokens
 
-git clone https://huggingface.co/spaces/<you>/peri-peri-fries space && cd space
-cp -r ../team-peri-peri-fries/* .
-cp deploy/space/Dockerfile deploy/space/README.md .
-
-# The checkpoints are not in the GitHub repository. Add them here over LFS.
-git lfs install && git lfs track "artifacts/*.pt"
-cp /path/to/artifacts/*.pt artifacts/
-
-git add -A && git commit -m "Examination engine" && git push
+python -m deploy.push_space --space <your-hf-username>/peri-peri-fries
 ```
+
+That one command creates the Docker Space, uploads the engine, uploads the three
+checkpoints and `calibration.json`, and prints the engine URL. Add
+`--skip-checkpoints` to deploy the fallback path instead, which needs no `.pt` files
+at all and still produces findings, a fragility index, a ledger and a report.
 
 In the Space's **Settings → Variables**, set:
 
@@ -351,7 +348,7 @@ vercel env add PERI_API production      # https://<you>-peri-peri-fries.hf.space
 vercel --prod
 ```
 
-`deploy/build_public.py` assembles `public/` at build time and bakes `PERI_API` into
+`deploy/build_public.mjs` assembles `public/` at build time and bakes `PERI_API` into
 the console, so the deployed page knows where its engine lives. The result:
 
 - `/` - the project page and a real, replayable examination record
