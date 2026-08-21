@@ -24,3 +24,6 @@ web/vendor/*.js
 # workstations. The checkpoints themselves are already ignored above; these are the
 # containers they travelled in, and one of them is past GitHub's file size limit.
 *.zip
+
+# The static bundle Vercel serves is assembled by deploy/build_public.py at build time.
+public/

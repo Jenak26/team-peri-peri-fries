@@ -5,11 +5,13 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import json
+import os
 import shutil
 import tempfile
 from pathlib import Path
 
 from fastapi import BackgroundTasks, FastAPI, File, HTTPException, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -26,6 +28,20 @@ WEB_ROOT = ROOT / "web"
 UPLOAD_ROOT = EVIDENCE_ROOT / "_uploads"
 
 app = FastAPI(title="Peri-Peri Fries")
+
+# The console may be served from the same origin as this API (running locally) or from
+# a separate static host while the engine runs elsewhere. PERI_ALLOWED_ORIGINS is a
+# comma-separated allowlist; it is empty by default, which keeps a local install
+# same-origin and closed.
+_origins = [o.strip() for o in os.environ.get("PERI_ALLOWED_ORIGINS", "").split(",") if o.strip()]
+if _origins:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=_origins,
+        allow_credentials=False,
+        allow_methods=["GET", "POST", "OPTIONS"],
+        allow_headers=["*"],
+    )
 JOBS: dict[str, dict] = {}
 # FastAPI resolves this marker at import time; calling File() inside the default
 # argument list would re-evaluate it on every request.
@@ -37,13 +53,19 @@ async def peri_error_handler(_request, exc: PeriError):
     return JSONResponse(status_code=400, content={"error": str(exc)})
 
 
-def _run_examination(temp_path: Path, job_id: str) -> None:
+def _run_examination(temp_path: Path, job_id: str, original_filename: str | None = None) -> None:
     try:
         def update_job(msg):
             if "evidence_id" in msg:
                 JOBS[job_id]["evidence_id"] = msg["evidence_id"]
 
-        findings = examine(temp_path, evidence_root=EVIDENCE_ROOT, examiner="demo", progress=update_job)
+        findings = examine(
+            temp_path,
+            evidence_root=EVIDENCE_ROOT,
+            examiner="demo",
+            progress=update_job,
+            original_filename=original_filename,
+        )
         JOBS[job_id] = {"state": "done", "evidence_id": findings["evidence_id"]}
     except Exception as exc:
         JOBS[job_id] = {"state": "error", "error": str(exc)}
@@ -61,7 +83,7 @@ async def examine_upload(background_tasks: BackgroundTasks, file: UploadFile = U
         shutil.copyfileobj(file.file, handle)
     job_id = temp_path.stem
     JOBS[job_id] = {"state": "running", "filename": file.filename}
-    background_tasks.add_task(_run_examination, temp_path, job_id)
+    background_tasks.add_task(_run_examination, temp_path, job_id, file.filename)
     return {"job_id": job_id, "state": "running"}
 
 

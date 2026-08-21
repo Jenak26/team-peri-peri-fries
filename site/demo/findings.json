@@ -51,7 +51,7 @@
     "usable_stream_names": [],
     "verbal": "no support"
   },
-  "evidence_id": "EVD_20260820T184337Z_841ffbf3",
+  "evidence_id": "EVD_20260820T191236Z_841ffbf3",
   "examiner": "verification-run",
   "exhibit": {
     "container": {
@@ -77,7 +77,7 @@
         "width": 320
       }
     },
-    "evidence_id": "EVD_20260820T184337Z_841ffbf3",
+    "evidence_id": "EVD_20260820T191236Z_841ffbf3",
     "original_filename": "demo.mp4",
     "original_read_only": true,
     "original_sha256": "841ffbf369d18194ab3ce1b6e47c5d23628251b2266cf4b524e49c4a9a32ac58",
@@ -85,7 +85,7 @@
     "working_copy_method": "byte-identical-copy",
     "working_sha256": "841ffbf369d18194ab3ce1b6e47c5d23628251b2266cf4b524e49c4a9a32ac58"
   },
-  "findings_hash": "350265b627e95a6042540965e3c79f0820923f808ad5c5ac8925c72721fb5d01",
+  "findings_hash": "afe2b565cb918cf2f4ff15f950771bcb0a394a4ed866a879a1a9e30de8bb9dfb",
   "fragility": {
     "axes": {
       "jpeg_quality": {
@@ -170,112 +170,117 @@
     "band": "LOW",
     "statement": "Conclusion survives to CRF 51 / 10% rescale / JPEG q5. Flips at no tested rung. FRAGILITY: LOW."
   },
-  "generated_ist": "2026-08-21T00:19:31+05:30",
-  "generated_utc": "2026-08-20T18:49:31Z",
+  "generated_ist": "2026-08-21T00:47:43+05:30",
+  "generated_utc": "2026-08-20T19:17:43Z",
   "ledger": [
     {
       "event": "INTAKE_RECEIVED",
-      "hash": "b2bd0fd5238b2c35c41aa621d21088a62ab9a250b98e859dfb224663cb03e5e7",
+      "hash": "fdefa4b0592f5b26eb785d4fc505e2768e058ffdf64300734a4e0164156456a6",
       "seq": 0,
-      "utc": "2026-08-20T18:43:37Z"
+      "utc": "2026-08-20T19:12:36Z"
     },
     {
       "event": "ORIGINAL_HASHED",
-      "hash": "25f5d6362d0f629024ab1924922f1844505118df949547ce0095332cc46a40ff",
+      "hash": "e031b5b2d2d7199c1fdd1036c93ca5bc80ba06dcc72478ccb31a98e20b7b2d7c",
       "seq": 1,
-      "utc": "2026-08-20T18:43:37Z"
+      "utc": "2026-08-20T19:12:36Z"
     },
     {
       "event": "QUARANTINE_SEALED",
-      "hash": "e97fc0cf5a77afe2bec12ea4ed06f66954fc44c7eb8ffa70a3eaa91fc3ddbb79",
+      "hash": "ad5b6a1f6758e90c69c95c7ca41e75a270c380b0f3b63175fbc75d86e4079fda",
       "seq": 2,
-      "utc": "2026-08-20T18:43:37Z"
+      "utc": "2026-08-20T19:12:36Z"
     },
     {
       "event": "CONTAINER_PROBED",
-      "hash": "982001597cafa4565634bf4c114e61b0cb06c4dfbb7013d1cf0d3efb1d5f4f58",
+      "hash": "f8a51c1f19d8364a65b40b5c87f636c4804a70a951bea14c4b3cae27e6a7371d",
       "seq": 3,
-      "utc": "2026-08-20T18:43:37Z"
+      "utc": "2026-08-20T19:12:36Z"
     },
     {
       "event": "WORKING_COPY_CREATED",
-      "hash": "7c825ce3974c7d2ef16b91100754da49731e6862889bd77b9731dd4736bd68ae",
+      "hash": "324f47df6da2ba6a9e4ac9ce8e319a5b75ec5f71c30416b7ba7b13cddcfdea87",
       "seq": 4,
-      "utc": "2026-08-20T18:43:37Z"
+      "utc": "2026-08-20T19:12:36Z"
     },
     {
       "event": "WORKING_COPY_HASHED",
-      "hash": "a0fec9f0e4cb76dd2d74b27ddbc893d4c3f0ba28e52fa5d5c4034487999a0caa",
+      "hash": "1b68a6f7f2c9a108202c7ba3afee3c3cfab438d29911200cdaa9a4206f0675bb",
       "seq": 5,
-      "utc": "2026-08-20T18:43:37Z"
+      "utc": "2026-08-20T19:12:36Z"
     },
     {
       "event": "MANIFEST_BUILT",
-      "hash": "bc3028fd097c1b6aba73010879764a4b234b9cc8e83689c84b9bc9cf2434b8f5",
+      "hash": "b39457ae0deb7942c264a9017698ef505218714198300f08f4d4b70db896e11c",
       "seq": 6,
-      "utc": "2026-08-20T18:43:38Z"
+      "utc": "2026-08-20T19:12:37Z"
     },
     {
       "event": "STREAM_SCORED",
-      "hash": "677f734807f0528ee69c59fd27ddc226650ccf3a86bf2079dc129c1448dd7df0",
+      "hash": "ef1b4230e2cf7ff4f91fda75c660779f70cd45f743a8c7a8238ffa56b1d1633a",
       "seq": 7,
-      "utc": "2026-08-20T18:43:38Z"
+      "utc": "2026-08-20T19:12:37Z"
     },
     {
       "event": "STREAM_SCORED",
-      "hash": "debc0afcd2726359050af1157252fc5908f6d2d606e49789d86cabb81f4c1545",
+      "hash": "f13d331770d8675a2bcd4841c7924bc1e98c1aae978143e2ba2a71375deda08b",
       "seq": 8,
-      "utc": "2026-08-20T18:45:38Z"
+      "utc": "2026-08-20T19:14:02Z"
     },
     {
       "event": "STREAM_SCORED",
-      "hash": "3a3f867e4bf3bae0350d801d0a0793a97372977aa88415d4d98a00499566fd5a",
+      "hash": "fdf1a9ff537ca4ef8ea1e4d6f5ec72916b319a4f0964823c149898811c8e116b",
       "seq": 9,
-      "utc": "2026-08-20T18:45:38Z"
+      "utc": "2026-08-20T19:14:02Z"
     },
     {
       "event": "DECISION_MADE",
-      "hash": "8d81653224cd2d010e63e5b1d5249c34f246f01b46fcc99498dab6056199d623",
+      "hash": "57ba09267076a22f2e41f99d34ba60b16649d1767d7d0d625ceb67a65bb50cb2",
       "seq": 10,
-      "utc": "2026-08-20T18:49:31Z"
+      "utc": "2026-08-20T19:17:42Z"
     },
     {
       "event": "LOCALISED",
-      "hash": "473a9c57411609adae8ac294b4d0a069aed84a67c6a4c961a681ba2b73029773",
+      "hash": "3e131dc2d46af1fa07a5904b32d315ceaec8d511c97f5a3fda3f0eac228c064e",
       "seq": 11,
-      "utc": "2026-08-20T18:49:31Z"
+      "utc": "2026-08-20T19:17:43Z"
     },
     {
       "event": "FINDINGS_SEALED",
-      "hash": "086ccd25424d4260e53bce045d0fa70793374680ca277a15b50b9a568ae44565",
+      "hash": "185948ad82feaf88b284dddb5bc39de9caa402b116f6f9ac233588814caada4c",
       "seq": 12,
-      "utc": "2026-08-20T18:49:31Z"
+      "utc": "2026-08-20T19:17:43Z"
     },
     {
       "event": "REPORT_GENERATED",
-      "hash": "eca80e0153af8de2eb38d014797ef6d57b663960c582ed39095529f1a06fd744",
+      "hash": "b96295e2f19c8d9ecdccf0e0d8f506d293865f6c8202c49e7206ab2f682f148d",
       "seq": 13,
-      "utc": "2026-08-20T18:49:31Z"
+      "utc": "2026-08-20T19:17:43Z"
     },
     {
       "event": "REPLAY_VERIFIED",
-      "hash": "bb00c94c913c6a5c51bd0742c4435e0ce61e1fe719fff3d8d9fe91b064d83201",
+      "hash": "c1166bbd0d8ca0b41b4c3da2e6570462b4f7cdfb6642ec11bbca25850fe60640",
       "seq": 14,
-      "utc": "2026-08-20T18:54:52Z"
+      "utc": "2026-08-20T19:23:02Z"
     }
   ],
   "localisation": {
     "overlay_files": [
       "frame_0008.png",
       "overlay_0008.png",
+      "videoprint_0008.png",
       "frame_0013.png",
       "overlay_0013.png",
+      "videoprint_0013.png",
       "frame_0057.png",
       "overlay_0057.png",
+      "videoprint_0057.png",
       "frame_0012.png",
       "overlay_0012.png",
+      "videoprint_0012.png",
       "frame_0014.png",
-      "overlay_0014.png"
+      "overlay_0014.png",
+      "videoprint_0014.png"
     ],
     "timeline": [
       {
@@ -763,9 +768,16 @@
         "score": 0.999198,
         "timestamp_s": 0.56
       }
+    ],
+    "videoprint_files": [
+      "videoprint_0008.png",
+      "videoprint_0013.png",
+      "videoprint_0057.png",
+      "videoprint_0012.png",
+      "videoprint_0014.png"
     ]
   },
-  "manifest_hash": "866f8c4aa7e6e28c9ea91b5cdd0477e23cadf57cc3a595db3cc669dec461b4a4",
+  "manifest_hash": "9aae60fca0854fb221a2795d34d4f403e10548a1467e8a4cbb2a692ec42395a9",
   "models": {
     "decoder": {
       "checkpoint_loaded": true,
@@ -884,8 +896,8 @@
           "width": 320
         }
       },
-      "now_utc": "2026-08-20T18:43:38.177930+00:00",
-      "path": "evidence\\EVD_20260820T184337Z_841ffbf3\\working.mp4",
+      "now_utc": "2026-08-20T19:12:37.125147+00:00",
+      "path": "evidence\\EVD_20260820T191236Z_841ffbf3\\working.mp4",
       "size_bytes": 139110,
       "suffix": ".mp4",
       "tags": {
@@ -1041,8 +1053,8 @@
             "width": 320
           }
         },
-        "now_utc": "2026-08-20T18:43:38.177930+00:00",
-        "path": "evidence\\EVD_20260820T184337Z_841ffbf3\\working.mp4",
+        "now_utc": "2026-08-20T19:12:37.125147+00:00",
+        "path": "evidence\\EVD_20260820T191236Z_841ffbf3\\working.mp4",
         "size_bytes": 139110,
         "suffix": ".mp4",
         "tags": {

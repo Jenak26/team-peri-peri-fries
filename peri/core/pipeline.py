@@ -41,6 +41,7 @@ class StreamScores:
     frame_scores: tuple[float, ...]
     tokens: tuple[tuple[float, ...], ...]
     masks: list[np.ndarray] | None
+    fields: list[np.ndarray] | None
     reliability: tuple[float, ...]
     modes: dict[str, str]
 
@@ -101,6 +102,7 @@ def score_frames(
 ) -> StreamScores:
     tokens: list[tuple[float, ...]] = []
     masks: list[np.ndarray] = []
+    fields: list[np.ndarray] = []
     reliability: list[float] = []
     for frame in frames:
         tensor = torch.from_numpy(np.ascontiguousarray(frame.transpose(2, 0, 1)))[None]
@@ -116,6 +118,9 @@ def score_frames(
         reliability.append(q(float(out["reliability"].mean().item())))
         if want_masks:
             masks.append(out["mask_prob"][0, 0].detach().cpu().numpy())
+            # The acquisition field is what the RGB/Videoprint toggle renders. It is
+            # only retained when masks are, so a fragility probe does not pay for it.
+            fields.append(field[0].detach().cpu().numpy())
 
     token_matrix = np.asarray(tokens, dtype=np.float32) if tokens else np.zeros((0, 8), dtype=np.float32)
     temporal = aggregator.infer(token_matrix)
@@ -132,6 +137,7 @@ def score_frames(
         frame_scores=tuple(q(v) for v in frame_scores),
         tokens=tuple(tokens),
         masks=masks if want_masks else None,
+        fields=fields if want_masks else None,
         reliability=tuple(reliability),
         modes={
             "acquisition": extractor.mode,
@@ -252,6 +258,7 @@ def examine(
     evidence_root: str | Path = "evidence",
     examiner: str = "unattributed",
     progress=None,
+    original_filename: str | None = None,
 ) -> dict:
     from peri.core.forensic_lr import (
         StreamCalibration,
@@ -260,7 +267,11 @@ def examine(
         fuse_and_decide,
     )
 
-    record = intake(src_path, evidence_root=evidence_root)
+    # The submitted filename is a custody fact. An upload arrives in a temporary
+    # file, so the caller passes the name the exhibit was actually submitted under.
+    record = intake(
+        src_path, evidence_root=evidence_root, original_filename=original_filename
+    )
     if progress:
         progress({"evidence_id": record.evidence_id})
     ledger = Ledger(record.ledger_path)
@@ -369,6 +380,7 @@ def examine(
         scored.reliability,
         fps,
         record.evidence_dir / "frames",
+        fields=scored.fields,
     )
     ledger.append("LOCALISED", record.evidence_id, {"top_frames": [r["index"] for r in localisation["top_suspect_frames"]]})
 
@@ -512,6 +524,7 @@ def replay(evidence_dir: str | Path) -> dict:
         scored.reliability,
         fps,
         record.evidence_dir / "frames",
+        fields=scored.fields,
     )
 
     new_findings = build_findings(

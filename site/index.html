@@ -83,6 +83,15 @@
   .snapshot-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 22px; align-items: start; }
   .viewer { background: #1f2420; border: 1px solid var(--ink); display: grid; place-items: center; min-height: 300px; overflow: hidden; }
   .viewer img { width: 100%; height: auto; display: block; image-rendering: pixelated; }
+  .viewtabs { display: flex; border: 1px solid var(--ink); margin-bottom: 10px; }
+  .viewtabs button {
+    flex: 1; border: 0; border-right: 1px solid var(--ink); background: var(--panel);
+    color: var(--ink); padding: 9px 6px; cursor: pointer; font-family: var(--mono);
+    font-size: 12px; transition: background .15s ease, color .15s ease;
+  }
+  .viewtabs button:last-child { border-right: 0; }
+  .viewtabs button.on { background: var(--ink); color: var(--paper); }
+  .viewhint { color: var(--muted); font-size: 13px; margin: 10px 0 0; min-height: 54px; }
   .timeline {
     height: 150px; border: 1px solid var(--line); background: var(--panel);
     display: flex; align-items: flex-end; gap: 2px; padding: 14px; overflow-x: auto;
@@ -138,6 +147,13 @@
       <a class="btn secondary" href="https://github.com/Jenak26/team-peri-peri-fries/blob/master/docs/METHODOLOGY.md">Methodology &amp; limitations</a>
       <a class="btn secondary" href="https://github.com/Jenak26/team-peri-peri-fries/blob/master/docs/TRAINING.md">Training guide</a>
     </div>
+
+    <p class="lede" style="font-size:15px;margin-top:22px">
+      <a href="console.html"><strong>Open the live examination console &rarr;</strong></a>
+      Drop in your own clip and it is hashed, sealed, examined by the trained models and
+      sealed into its own replayable record with its own report. Every examination is
+      run on the exhibit you submit; nothing on this site is pre-generated.
+    </p>
 
     <div class="strip" id="strip">
       <div><span>outcome</span><b id="s-outcome">&mdash;</b></div>
@@ -416,7 +432,9 @@
     if (top.length) {
       var idx = String(top[0].index);
       while (idx.length < 4) idx = "0" + idx;
-      overlay = '<img alt="Tamper mask overlay on the top suspect frame" src="demo/overlay_' + idx + '.png" />';
+      window.__peri_idx = idx;
+      overlay = '<img id="viewimg" alt="Recorded frame ' + esc(top[0].index) +
+        '" src="demo/frame_' + idx + '.png" />';
     } else {
       overlay = '<p class="loading" style="color:#f6f1e7">No suspect frame recorded.</p>';
     }
@@ -427,10 +445,15 @@
     var html =
       '<div class="snapshot-grid">' +
         '<div>' +
+          '<div class="viewtabs" id="viewtabs">' +
+            '<button type="button" data-view="frame" class="on">RGB</button>' +
+            '<button type="button" data-view="videoprint">Videoprint</button>' +
+            '<button type="button" data-view="overlay">Tamper mask</button>' +
+          "</div>" +
           '<div class="viewer">' + overlay + "</div>" +
-          '<p class="sub" style="margin-top:10px;font-size:13px">' +
-            "Top suspect frame with the tamper mask overlaid. Regions the model is not confident " +
-            "about are shaded down rather than hidden." +
+          '<p class="viewhint" id="viewhint">' +
+            "The recorded picture, as a viewer would see it. Nothing here looks wrong, " +
+            "which is exactly the problem." +
           "</p>" +
         "</div>" +
         '<div>' +
@@ -484,6 +507,35 @@
     }
 
     $("snap-body").innerHTML = html;
+    wireViewer();
+  }
+
+  var VIEW_HINTS = {
+    frame: "The recorded picture, as a viewer would see it. Nothing here looks wrong, " +
+      "which is exactly the problem.",
+    videoprint: "The acquisition fingerprint: the trace the capture and encode path " +
+      "leaves in every frame. A region that was composited in carries a different " +
+      "texture from the rest of the frame, because it was not acquired the same way.",
+    overlay: "The decoder's mask over the picture. Shading follows the reliability map, " +
+      "so regions the model does not trust stay faint rather than being hidden."
+  };
+
+  function wireViewer() {
+    var tabs = document.getElementById("viewtabs");
+    var img = document.getElementById("viewimg");
+    var hint = document.getElementById("viewhint");
+    if (!tabs || !img) return;
+    var idx = window.__peri_idx;
+    tabs.addEventListener("click", function (event) {
+      var button = event.target.closest("button");
+      if (!button) return;
+      var view = button.dataset.view;
+      img.src = "demo/" + view + "_" + idx + ".png";
+      hint.textContent = VIEW_HINTS[view] || "";
+      [].forEach.call(tabs.querySelectorAll("button"), function (b) {
+        b.classList.toggle("on", b === button);
+      });
+    });
   }
 
   fetch("demo/findings.json")

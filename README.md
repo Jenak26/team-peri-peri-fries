@@ -168,6 +168,210 @@ has never trained a model, is in [**docs/TRAINING.md**](docs/TRAINING.md).
 
 ---
 
+## Run it on your machine, and examine your own clip
+
+Everything below works on a clean clone with **no trained checkpoints and no GPU**.
+Where a model is missing the pipeline substitutes a documented classical operator and
+says so on screen and in the report - that fallback is the path we rehearse, not an
+error state.
+
+### 1. Prerequisites
+
+You need **Python 3.10, 3.11 or 3.12** and **ffmpeg** on your `PATH`.
+
+| Platform | Install ffmpeg |
+|---|---|
+| Windows | `winget install Gyan.FFmpeg` (then reopen the terminal) |
+| macOS | `brew install ffmpeg` |
+| Debian / Ubuntu | `sudo apt-get update && sudo apt-get install -y ffmpeg` |
+
+```bash
+ffmpeg -version    # must print a version, not "command not found"
+```
+
+### 2. Clone and install
+
+```bash
+git clone https://github.com/Jenak26/team-peri-peri-fries.git
+cd team-peri-peri-fries
+
+python -m venv .venv
+# Windows PowerShell:  .venv\Scripts\Activate.ps1
+# Windows Git Bash:    source .venv/Scripts/activate
+# macOS / Linux:       source .venv/bin/activate
+
+python -m pip install --upgrade pip
+pip install -r requirements-cpu.txt
+```
+
+### 3. Prove the install before trusting anything it says
+
+```bash
+python -m pytest -q            # 88 tests, no GPU, a few seconds
+python -m tools.selftest_lr    # the three acceptance assertions
+```
+
+### 4. Start the examination console
+
+```bash
+python -m uvicorn api.main:app --host 127.0.0.1 --port 8000
+```
+
+Open **<http://127.0.0.1:8000>** and drop a video file on the panel on the left.
+Any short `.mp4` works. If you would rather not hunt for one, generate the
+deterministic fixture in a second terminal:
+
+```bash
+python -m tools.make_demo_clip     # writes evidence/_fixtures/demo.mp4
+```
+
+### 5. What you will see
+
+1. The evidence ID appears and the SHA-256 of your original types itself out. The
+   file you dropped is sealed read-only and never written to again.
+2. The custody ledger fills in live, one hash-chained entry per examination event.
+3. **RGB / Videoprint / Tamper mask** switches the viewer between the recorded
+   picture, the acquisition fingerprint, and the decoder's mask. Press <kbd>V</kbd>
+   to flip between the first two - a composited region carries a different texture
+   because it was not acquired the same way.
+4. The tamper timeline fills; click any bar to jump the viewer to that frame.
+   Faded bars are frames the model does not trust.
+5. The fragility panel reports the laundering strength at which our own conclusion
+   would break.
+6. The log<sub>10</sub> LR dial, the ENFSI verbal equivalent, and the outcome. An
+   amber `INCONCLUSIVE` with a reason code is a correct answer, not a failure.
+7. **Generate Report** writes the nine-page PDF. **Verify Replay** re-runs the whole
+   examination and shows the two findings hashes side by side.
+
+### 6. How long it takes
+
+An examination samples 64 frames and then attacks its own verdict along three
+laundering ladders, so on a CPU-only install expect **roughly five minutes** for a
+short clip. The terminal running uvicorn prints progress. If your PyTorch build
+exposes CUDA, the pipeline picks it up automatically and it is far quicker:
+
+```bash
+python -c "import torch; print(torch.cuda.is_available())"
+```
+
+### 7. Running with the trained checkpoints
+
+The three `.pt` files are not in the repository - `stage_b_decoder.pt` alone is
+105 MB, past GitHub's hard file limit. Train them with
+[**docs/TRAINING.md**](docs/TRAINING.md), then drop them into `artifacts/` as
+`stage_a_videoprint.pt`, `stage_b_decoder.pt` and `stage_c_temporal.pt` and record
+their hashes:
+
+```bash
+python -m tools.checksum_artifacts
+```
+
+The console's **videoprint mode** and **temporal mode** readouts tell you which path
+actually ran, and the same information is on the report's Methods page. Without the
+checkpoints you get `srm-residual` and `residual-threshold`; with them,
+`learned-videoprint` and `learned-decoder`.
+
+### 8. Command line, without the browser
+
+```bash
+python -c "from peri.core.pipeline import examine;   f = examine('evidence/_fixtures/demo.mp4', examiner='your-name');   print(f['decision']['outcome'], f['findings_hash'])"
+```
+
+Everything an examination produces lands in `evidence/{EVIDENCE_ID}/`: the sealed
+original, the working copy, `findings.json`, `ledger.jsonl`, `manifest.json`, the
+frame renders and `report.pdf`.
+
+### Troubleshooting
+
+| Symptom | Cause and fix |
+|---|---|
+| `could not open video` | ffmpeg/ffprobe not on `PATH`, or the file is not a video container |
+| Examination sits at "running" for minutes | Expected on CPU. Watch the uvicorn terminal; the ledger keeps appending |
+| `videoprint mode: srm-residual` | No `artifacts/*.pt` present. This is the documented fallback, not a fault |
+| Videoprint tab greyed out | That examination recorded no fingerprint field; re-run after adding checkpoints |
+| Port 8000 already in use | `--port 8001`, and open that port instead |
+
+---
+
+## Putting it on the internet
+
+The console and the engine deploy to different places, for a reason worth stating
+plainly: **the engine cannot run on serverless hosting.** Vercel's Python runtime caps
+a function bundle at 250 MB unzipped and a request at 60 s (300 s on Pro). A CPU-only
+PyTorch install is close to 1 GB before our own code, `stage_b_decoder.pt` is 105 MB on
+its own, one examination takes minutes, and the pipeline shells out to `ffmpeg`, which
+serverless Python runtimes do not ship. So:
+
+| Piece | Where | Why |
+|---|---|---|
+| Project page + examination console | **Vercel** | Static files, instant, custom domain |
+| Examination engine (FastAPI + PyTorch + ffmpeg) | **Hugging Face Spaces** | Docker, no bundle cap, no request timeout, holds the checkpoints |
+
+### 1. Deploy the engine to a Space
+
+Create a **Docker** Space, then push this repository to it with
+`deploy/space/Dockerfile` and `deploy/space/README.md` at the root:
+
+```bash
+pip install huggingface_hub
+huggingface-cli login                     # paste a write token from hf.co/settings/tokens
+
+git clone https://huggingface.co/spaces/<you>/peri-peri-fries space && cd space
+cp -r ../team-peri-peri-fries/* .
+cp deploy/space/Dockerfile deploy/space/README.md .
+
+# The checkpoints are not in the GitHub repository. Add them here over LFS.
+git lfs install && git lfs track "artifacts/*.pt"
+cp /path/to/artifacts/*.pt artifacts/
+
+git add -A && git commit -m "Examination engine" && git push
+```
+
+In the Space's **Settings → Variables**, set:
+
+```
+PERI_ALLOWED_ORIGINS = https://<your-project>.vercel.app
+```
+
+Without that the browser blocks the cross-origin call and the console sits at
+"running" forever. The Space builds in a few minutes and answers on
+`https://<you>-peri-peri-fries.hf.space`.
+
+> [!NOTE]
+> A free CPU Space takes several minutes per examination and sleeps when idle - wake
+> it before you present. If the examination is on the critical path of a live demo,
+> upgrade the Space hardware or run the console against `localhost` instead.
+
+### 2. Deploy the console to Vercel
+
+```bash
+npm i -g vercel
+vercel link
+vercel env add PERI_API production      # https://<you>-peri-peri-fries.hf.space
+vercel --prod
+```
+
+`deploy/build_public.py` assembles `public/` at build time and bakes `PERI_API` into
+the console, so the deployed page knows where its engine lives. The result:
+
+- `/` - the project page and a real, replayable examination record
+- `/console` - the live console: drop a clip, watch the ledger, get your own report
+
+You can also point a locally served console at any engine without rebuilding:
+
+```
+http://127.0.0.1:8000/?api=https://<you>-peri-peri-fries.hf.space
+```
+
+> [!IMPORTANT]
+> Every examination runs on the exhibit that was submitted. There is no pre-computed
+> result anywhere in this system: the evidence ID is derived from the SHA-256 of the
+> file you uploaded, and the findings, the ledger and the PDF are generated for it.
+> The one record published on the static page is labelled as a published record and is
+> the output of a real run you can reproduce with `/replay`.
+
+---
+
 ## Architecture
 
 Nine layers. The model stages are the replaceable part; everything around them is the

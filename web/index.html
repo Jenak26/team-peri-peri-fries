@@ -86,7 +86,17 @@
       overflow: hidden;
       position: relative;
     }
-    .viewer img { width: 100%; height: 100%; object-fit: contain; display: block; }
+    .viewer img { width: 100%; height: 100%; object-fit: contain; display: block; image-rendering: pixelated; }
+    .viewtabs { display: flex; gap: 0; margin-bottom: 10px; border: 1px solid var(--ink); }
+    .viewtabs button {
+      flex: 1; border: 0; border-right: 1px solid var(--ink); background: var(--panel);
+      color: var(--ink); padding: 9px 6px; cursor: pointer; font-family: var(--mono);
+      font-size: 12px; transition: background .15s ease, color .15s ease;
+    }
+    .viewtabs button:last-child { border-right: 0; }
+    .viewtabs button.on { background: var(--ink); color: var(--paper); }
+    .viewtabs button:disabled { opacity: .4; cursor: not-allowed; }
+    .viewhint { color: var(--muted); font-size: 12px; margin: 8px 0 0; min-height: 32px; }
     .empty { color: var(--muted); padding: 24px; text-align: center; }
     .metrics {
       display: grid;
@@ -149,7 +159,8 @@
         <p class="brief">A local, hash-led video examination workflow. Upload an exhibit, watch the ledger fill, inspect the residual view, read the timeline, and generate the report artifact.</p>
       </div>
       <div class="status-strip">
-        <div><span>MODE</span><b id="mode">fallback-ready</b></div>
+        <div><span>ENGINE</span><b id="engine">local</b></div>
+        <div><span>MODE</span><b id="mode">ready</b></div>
         <div><span>EVIDENCE</span><b id="evidence">none</b></div>
         <div><span>LEDGER</span><b id="ledgerState">idle</b></div>
       </div>
@@ -169,9 +180,17 @@
       </aside>
       <div class="stack">
         <section>
-          <div class="section-head"><h2>Exhibit Signal</h2><span class="tag">RGB / residual overlay</span></div>
+          <div class="section-head"><h2>Exhibit Signal</h2><span class="tag" id="viewFrameTag">no frame selected</span></div>
           <div class="grid-two">
-            <div class="viewer" id="viewer"><div class="empty">Top suspect frame appears here after examination.</div></div>
+            <div>
+              <div class="viewtabs" id="viewtabs">
+                <button type="button" data-view="frame" class="on">RGB</button>
+                <button type="button" data-view="videoprint">Videoprint</button>
+                <button type="button" data-view="overlay">Tamper mask</button>
+              </div>
+              <div class="viewer" id="viewer"><div class="empty">Top suspect frame appears here after examination.</div></div>
+              <p class="viewhint" id="viewhint">The recorded picture, as a viewer would see it.</p>
+            </div>
             <div class="metrics">
               <div class="metric"><span>original SHA-256</span><b id="sha">waiting</b></div>
               <div class="metric"><span>outcome</span><b id="outcome">not run</b></div>
@@ -210,6 +229,17 @@
     const $ = (id) => document.getElementById(id);
     let currentEvidence = null;
 
+    // Where the examination engine lives. Served from the engine itself this stays
+    // empty and every call is same-origin. Hosted as a static site with the engine
+    // elsewhere, set window.PERI_API or ?api=https://host - the engine must list that
+    // origin in PERI_ALLOWED_ORIGINS for the browser to allow the call.
+    const API = (function () {
+      const fromQuery = new URLSearchParams(location.search).get("api");
+      const base = fromQuery || window.PERI_API || "";
+      return base.replace(/[/]$/, "");
+    })();
+    const url = (path) => API + path;
+
     function addLedger(row) {
       const div = document.createElement("div");
       div.className = "ledger-row";
@@ -235,13 +265,68 @@
       });
     }
 
-    function showFrame(index) {
-      if (!currentEvidence) return;
-      $("viewer").innerHTML = `<img alt="Selected overlay" src="/frames/${currentEvidence}/overlay_${String(index).padStart(4, "0")}.png" />`;
+    const VIEWS = {
+      frame: {
+        prefix: "frame",
+        label: "RGB",
+        hint: "The recorded picture, as a viewer would see it. Nothing here looks wrong, which is the point."
+      },
+      videoprint: {
+        prefix: "videoprint",
+        label: "Videoprint",
+        hint: "The acquisition fingerprint: the trace the capture and encode path leaves in every frame. A region that was composited in carries a different texture from the rest of the frame, because it was not acquired the same way."
+      },
+      overlay: {
+        prefix: "overlay",
+        label: "Tamper mask",
+        hint: "The decoder's mask over the picture. Shading follows the reliability map, so regions the model does not trust stay faint rather than being hidden."
+      }
+    };
+    let currentView = "frame";
+    let currentFrame = null;
+    let availableViews = { frame: true, videoprint: false, overlay: true };
+
+    function pad(index) {
+      return String(index).padStart(4, "0");
     }
 
+    function renderViewer() {
+      if (!currentEvidence || currentFrame === null) return;
+      const view = VIEWS[currentView] || VIEWS.frame;
+      const src = url(`/frames/${currentEvidence}/${view.prefix}_${pad(currentFrame)}.png`);
+      $("viewer").innerHTML = `<img alt="${view.label} view of frame ${currentFrame}" src="${src}" />`;
+      $("viewhint").textContent = view.hint;
+      $("viewFrameTag").textContent = `frame ${currentFrame} / ${view.label.toLowerCase()}`;
+      [...document.querySelectorAll("#viewtabs button")].forEach((b) => {
+        b.classList.toggle("on", b.dataset.view === currentView);
+      });
+    }
+
+    function showFrame(index) {
+      if (!currentEvidence) return;
+      currentFrame = index;
+      renderViewer();
+    }
+
+    document.querySelectorAll("#viewtabs button").forEach((button) => {
+      button.addEventListener("click", () => {
+        if (button.disabled) return;
+        currentView = button.dataset.view;
+        renderViewer();
+      });
+    });
+
+    // Keyboard shortcut for the stage: V flips between the picture and the fingerprint.
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "v" && event.key !== "V") return;
+      if (/^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName)) return;
+      if (!availableViews.videoprint) return;
+      currentView = currentView === "videoprint" ? "frame" : "videoprint";
+      renderViewer();
+    });
+
     async function loadFindings(evidenceId) {
-      const res = await fetch(`/findings/${evidenceId}`);
+      const res = await fetch(url(`/findings/${evidenceId}`));
       const f = await res.json();
       currentEvidence = f.evidence_id;
       $("evidence").textContent = f.evidence_id;
@@ -254,6 +339,16 @@
       $("verbal").textContent = f.decision.verbal;
       $("sentence").textContent = f.decision.sentence;
       renderTimeline(f.localisation.timeline);
+
+      const printFiles = f.localisation.videoprint_files || [];
+      availableViews.videoprint = printFiles.length > 0;
+      const printButton = document.querySelector('#viewtabs button[data-view="videoprint"]');
+      printButton.disabled = !availableViews.videoprint;
+      printButton.title = availableViews.videoprint
+        ? "Press V to flip between RGB and Videoprint"
+        : "This examination did not record a fingerprint field";
+      if (!availableViews.videoprint && currentView === "videoprint") currentView = "frame";
+
       const first = f.localisation.top_suspect_frames[0];
       if (first) showFrame(first.index);
     }
@@ -272,13 +367,13 @@
         const data = new FormData();
         data.append("file", file);
         
-        const res = await fetch("/examine", { method: "POST", body: data });
+        const res = await fetch(url("/examine"), { method: "POST", body: data });
         if (!res.ok) {
           throw new Error(`Server returned ${res.status}: ${await res.text()}`);
         }
         
         const job = await res.json();
-        const source = new EventSource(`/status/${job.job_id}`);
+        const source = new EventSource(url(`/status/${job.job_id}`));
         
         source.addEventListener("job", (e) => {
           const state = JSON.parse(e.data);
@@ -307,12 +402,14 @@
       }
     });
 
+    $("engine").textContent = API || "same origin";
+
     $("reportBtn").onclick = () => {
-      if (currentEvidence) window.open(`/report/${currentEvidence}`, "_blank");
+      if (currentEvidence) window.open(url(`/report/${currentEvidence}`), "_blank");
     };
     $("replayBtn").onclick = async () => {
       if (!currentEvidence) return;
-      const res = await fetch(`/replay/${currentEvidence}`, { method: "POST" });
+      const res = await fetch(url(`/replay/${currentEvidence}`), { method: "POST" });
       const data = await res.json();
       $("replay").textContent = `${data.match ? "match" : "mismatch"} ${data.original_hash} / ${data.replay_hash}`;
     };
